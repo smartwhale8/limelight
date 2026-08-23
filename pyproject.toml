@@ -69,11 +69,17 @@ minversion = "8.0"
 testpaths = ["tests"]
 pythonpath = ["."]
 addopts = "-q --strict-markers --strict-config"
+# Warnings from our own code are errors. Each exemption below is a specific upstream
+# issue, matched as narrowly as possible so a new warning still fails the build.
 filterwarnings = [
   "error",
-  # python-miio pulls in older transitive dependencies on some platforms.
+  # python-miio uses deprecated APIs internally, including datetime.utcnow().
   "default::DeprecationWarning:miio.*",
   "default::DeprecationWarning:pkg_resources.*",
+  # python-miio's MiotValueType puts functools.partial members in an Enum, which
+  # Python 3.13 warns about at import. Matched on the message rather than the module,
+  # because the warning is issued from enum.py rather than from miio.
+  "default:functools\\.partial will be a method descriptor:FutureWarning",
 ]
 
 [tool.coverage.run]
