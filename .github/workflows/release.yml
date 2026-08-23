@@ -105,8 +105,8 @@ jobs:
             installation from your browser or file manager the first time. The app finds
             the lamp on your Wi-Fi by itself and needs nothing else running.
 
-            **Python service.** `pip install limelight`, then `limelight discover` and
-            `limelight adopt --auto`.
+            **Python service.** `pip install limelight-miio`, then `limelight discover`
+            and `limelight adopt --auto`. The import name and commands stay `limelight`.
 
             The APK is a debug build, so it is signed with the standard debug key rather
             than a release key. That is fine for sideloading and means it cannot be
@@ -119,7 +119,7 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: testpypi
-      url: https://test.pypi.org/p/limelight
+      url: https://test.pypi.org/p/limelight-miio
     permissions:
       id-token: write          # the only credential; no API token is stored
     steps:
@@ -144,7 +144,7 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: pypi
-      url: https://pypi.org/p/limelight
+      url: https://pypi.org/p/limelight-miio
     permissions:
       id-token: write
     steps:

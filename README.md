@@ -243,6 +243,18 @@ Further reading: [docs/PROTOCOL.md](https://github.com/smartwhale8/limelight/blo
 
 Python 3.11 or newer.
 
+From PyPI, once published:
+
+```bash
+pip install limelight-miio
+```
+
+The distribution is `limelight-miio` because PyPI does not accept the bare name. Everything
+else stays `limelight`: `import limelight`, and the `limelight` and `limelight-server`
+commands.
+
+From a checkout, for development or to run the newest code:
+
 ```bash
 git clone https://github.com/smartwhale8/limelight.git
 cd limelight

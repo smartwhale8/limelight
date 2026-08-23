@@ -4,10 +4,12 @@ build-backend = "hatchling.build"
 
 [project]
 # Distribution name, which is what `pip install` takes. It differs from the import name
-# on purpose: `limelight` is already taken on PyPI by an unrelated package, so
-# `pip install limelight` would fetch that one instead of this. The import name and the
-# console script both stay `limelight`; only the name pip resolves changes.
-name = "limelight"
+# deliberately: PyPI refuses the bare name `limelight`, answering "this project name isn't
+# allowed" at registration. No project of that name exists, so it sits on PyPI's
+# prohibited list, which is not public and which nothing outside the registration form can
+# inspect. The import name, console scripts, repository and Android application id all
+# remain `limelight`; only the string after `pip install` differs.
+name = "limelight-miio"
 version = "2.0.1"
 description = "Local control of Xiaomi-ecosystem lights without a vendor application"
 readme = "README.md"
@@ -51,7 +53,7 @@ server = [
 dev = [
   # Self-reference by DISTRIBUTION name, not import name. Getting this wrong would make
   # `pip install -e ".[dev]"` pull the unrelated `limelight` package from PyPI.
-  "limelight[server]",
+  "limelight-miio[server]",
   "pytest>=8.0",
   "pytest-cov>=5.0",
   # starlette's TestClient needs an HTTP client. Recent versions require httpx2 and

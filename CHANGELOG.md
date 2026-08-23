@@ -8,6 +8,18 @@ contract in [docs/API.md](docs/API.md) is what the major version protects.
 
 ## [Unreleased]
 
+### Changed
+
+- **The distribution name is `limelight-miio`.** PyPI refuses the bare name `limelight`,
+  answering "this project name isn't allowed" at registration. No project of that name
+  exists, so it sits on PyPI's prohibited list, which is not public and which nothing
+  outside the registration form can inspect. Every availability check reported it free.
+
+  Nothing else changes: `import limelight`, the `limelight` and `limelight-server`
+  commands, the repository and the Android application id `com.smartwhale8.limelight` are
+  all unaffected. Only the string after `pip install` differs, which is a normal split
+  between distribution name and import name.
+
 ### Added
 
 - Publishing to PyPI from the release workflow, authenticated with Trusted Publishing
@@ -110,7 +122,9 @@ produce an intense white light, used to light theatre stages from the 1830s.
 
 - **Breaking: the import name is now `limelight`.** `import lamplight` no longer resolves.
 - **Breaking: the console scripts are `limelight` and `limelight-server`.**
-- **Breaking: the distribution is `limelight`**, installed with `pip install limelight`.
+- **Breaking: the distribution name changed.** See 2.1.0: PyPI refuses the bare name
+  `limelight`, so the distribution is `limelight-miio` while the import name, console
+  scripts and Android id all remain `limelight`.
 - **Breaking: the Android application id is `com.smartwhale8.limelight`**, so the app
   installs alongside an older build rather than upgrading it. Remove the old one.
 - Configuration moved to `~/.config/limelight/`.
