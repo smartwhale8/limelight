@@ -21,6 +21,11 @@ Nothing yet.
 
 ## [1.1.0] - 2026-08-23
 
+> **Artifacts withdrawn.** The published build carried a 16 MB source distribution that had
+> Android build output swept into it. The release was deleted and superseded by 1.1.1. The
+> tag remains, because the commit it points at is real and the changes below shipped; only
+> the artifacts were faulty. Use 1.1.1.
+
 ### Added
 
 - **Android client** in `android/`, speaking miIO directly to the lamp over UDP rather than
