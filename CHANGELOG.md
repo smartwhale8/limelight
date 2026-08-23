@@ -10,6 +10,40 @@ contract in [docs/API.md](docs/API.md) is what the major version protects.
 
 Nothing yet.
 
+## [1.1.0] - 2026-08-23
+
+### Added
+
+- **Android client** in `android/`, speaking miIO directly to the lamp over UDP rather than
+  through the HTTP service, so it works with nothing else running. Discovery, connection and
+  every device operation are implemented. No third-party runtime dependency: `javax.crypto`,
+  `java.net` and `org.json` only.
+- `constraints.txt`, recording the exact versions the project is built and tested against.
+  CI installs with `-c`, so a red build means a change here broke something rather than an
+  upstream release having shipped.
+- `tests/test_dependency_contract.py`, asserting the two imports and three calls we rely on
+  from python-miio, and enforcing that no module outside the transport imports it.
+- A release workflow: a `v*` tag builds the Android APK and the Python distribution and
+  attaches both to a GitHub Release.
+- A test asserting that `__version__` and the `pyproject.toml` version agree.
+
+### Changed
+
+- **python-miio capped below 0.6.** It is a 0.x project, so the minor version carries
+  breaking changes, and 0.6 is a large refactor adding MIoT support and an introspectable
+  API. 0.5.12 is the current stable release and the last of the 0.5 line.
+- **CI matrix narrowed** from 3.11, 3.12 and 3.13 to 3.11 and 3.14: the declared floor, and
+  the version actually used for development, which had not been tested at all.
+- CI now compiles the Android client on GitHub's runners, which carry the Android SDK.
+- README's protocol tutorial condensed from 323 lines to 167, deferring byte-level detail to
+  `docs/PROTOCOL.md`, which already covered the same ground in more depth.
+
+### Fixed
+
+- The Kotlin codec omitted the null terminator that the reference implementation appends to
+  the JSON before encrypting. Found by comparing bytes against python-miio; the packets
+  looked correct and would have failed against the firmware.
+
 ## [1.0.0] - 2026-08-23
 
 First release.
@@ -87,5 +121,6 @@ First release.
   software: the device discloses its own token to any unauthenticated request on the local
   network, and its setup access point is open and unencrypted.
 
-[Unreleased]: https://github.com/smartwhale8/lamplight/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/smartwhale8/lamplight/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/smartwhale8/lamplight/releases/tag/v1.1.0
 [1.0.0]: https://github.com/smartwhale8/lamplight/releases/tag/v1.0.0

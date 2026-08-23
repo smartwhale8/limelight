@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "lamplight"
-version = "1.0.0"
+version = "1.1.0"
 description = "Local control of Xiaomi-ecosystem lights without a vendor application"
 readme = "README.md"
 requires-python = ">=3.11"

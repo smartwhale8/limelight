@@ -96,3 +96,23 @@ def test_no_other_module_imports_miio(attribute):
         if "from miio" in text or "import miio" in text:
             offenders.append(str(path))
     assert not offenders, f"these modules import miio directly: {offenders}"
+
+
+def test_version_matches_pyproject():
+    """``__version__`` and the packaging metadata must agree.
+
+    They are declared in two files, so a release that bumps one and forgets the other
+    would ship a wheel whose reported version is wrong.
+    """
+    import pathlib
+    import re
+
+    import lamplight
+
+    pyproject = pathlib.Path(__file__).parent.parent / "pyproject.toml"
+    declared = re.search(r'^version = "([^"]+)"', pyproject.read_text(), re.M)
+    assert declared, "no version found in pyproject.toml"
+    assert lamplight.__version__ == declared.group(1), (
+        f"lamplight.__version__ is {lamplight.__version__} but pyproject.toml "
+        f"says {declared.group(1)}"
+    )
