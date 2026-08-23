@@ -8,6 +8,10 @@ contract in [docs/API.md](docs/API.md) is what the major version protects.
 
 ## [Unreleased]
 
+Nothing yet.
+
+## [2.1.0] - 2026-08-24
+
 ### Changed
 
 - **The distribution name is `limelight-miio`.** PyPI refuses the bare name `limelight`,
@@ -271,7 +275,8 @@ First release.
   software: the device discloses its own token to any unauthenticated request on the local
   network, and its setup access point is open and unencrypted.
 
-[Unreleased]: https://github.com/smartwhale8/limelight/compare/v2.0.1...HEAD
+[Unreleased]: https://github.com/smartwhale8/limelight/compare/v2.1.0...HEAD
+[2.1.0]: https://github.com/smartwhale8/limelight/releases/tag/v2.1.0
 [2.0.1]: https://github.com/smartwhale8/limelight/releases/tag/v2.0.1
 [2.0.0]: https://github.com/smartwhale8/limelight/releases/tag/v2.0.0
 [1.1.1]: https://github.com/smartwhale8/limelight/releases/tag/v1.1.1

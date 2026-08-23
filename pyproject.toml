@@ -10,7 +10,7 @@ build-backend = "hatchling.build"
 # inspect. The import name, console scripts, repository and Android application id all
 # remain `limelight`; only the string after `pip install` differs.
 name = "limelight-miio"
-version = "2.0.1"
+version = "2.1.0"
 description = "Local control of Xiaomi-ecosystem lights without a vendor application"
 readme = "README.md"
 requires-python = ">=3.11"

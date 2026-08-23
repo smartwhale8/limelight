@@ -89,7 +89,11 @@ jobs:
           path: dist/
           if-no-files-found: error
 
+      # Only a tag push creates the GitHub Release. A manual run is a rehearsal, and
+      # softprops/action-gh-release would otherwise create the tag and release for a
+      # version that has not been decided yet.
       - name: Publish the release
+        if: github.event_name == 'push'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.event.inputs.tag || github.ref_name }}

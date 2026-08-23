@@ -21,7 +21,7 @@ second device type to be added without touching the service. See ``docs/ARCHITEC
 for the reasoning and ``docs/DEVICES.md`` for the procedure.
 """
 
-__version__ = "2.0.1"
+__version__ = "2.1.0"
 
 from .config import Config, DeviceConfig, Schedule, ServerConfig
 from .device import (
