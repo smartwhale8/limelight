@@ -19,8 +19,14 @@ from .fakes import FakeTransport
 
 
 @pytest.fixture(autouse=True)
-def isolated_config(tmp_path, monkeypatch):
-    """Point configuration at a temporary directory for the duration of each test."""
+def isolated_config(request, tmp_path, monkeypatch):
+    """Point configuration at a temporary directory for the duration of each test.
+
+    Hardware tests are exempt: they need the device genuinely adopted on this machine,
+    so redirecting their configuration would make them skip every time.
+    """
+    if request.node.get_closest_marker("hardware"):
+        return None
     monkeypatch.setenv("LIMELIGHT_CONFIG", str(tmp_path / "config"))
     monkeypatch.delenv("LIMELIGHT_API_KEY", raising=False)
     return tmp_path / "config"

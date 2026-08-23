@@ -156,14 +156,20 @@ file.
 
 ## Behaviour problems
 
-### Brightness jumps to an unexpected value
+### Brightness changes when I turn eyecare on
 
-Expected, and compensated for. `set_eyecare` and `delay_off` both reset brightness in
-firmware. The driver restores the previous value, so you may briefly observe the wrong
-figure between the two commands.
+Expected. Eyecare mode sets its own brightness and ramps to it over about three seconds.
+It is the mode working, not a fault.
 
-If it stays wrong, quirk compensation may be disabled. Check that the driver is not
-constructed with `compensate_quirks=False`.
+### Eyecare turns itself off immediately
+
+Something is sending a brightness command straight after enabling it. `set_bright` cancels
+eyecare on this hardware, and there is no way to hold both.
+
+If you see the lamp's base flash the eye symbol and revert to the brightness markers, that
+is the symptom. Moving the brightness slider while eyecare is on does the same thing, by
+design. Versions before 2.0.1 did it automatically and the mode could not be kept on at
+all; upgrade.
 
 ### A scheduled sunrise did not happen
 

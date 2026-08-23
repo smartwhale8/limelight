@@ -18,6 +18,15 @@ re-runs discovery, matches the device by its stable device id, and updates its a
 
 *Serialisation.* One lock guards all access. These devices tolerate no concurrency, and
 the scheduler thread and the web request threads share a single transport.
+
+A note on sockets
+-----------------
+``python-miio`` creates a fresh UDP socket for every call and closes none of them, so
+each command emits a ``ResourceWarning`` when the socket is garbage collected. Measured
+over thirty consecutive commands, the descriptor count does not grow: CPython's
+refcounting reclaims each socket as it leaves scope. There is nothing to close from here,
+because the socket is a local inside the library, so the warning is filtered in
+``pyproject.toml`` rather than worked around.
 """
 
 from __future__ import annotations
@@ -30,9 +39,10 @@ import time
 from typing import Any
 
 from miio import Device
+from miio.exceptions import DeviceError as MiioDeviceError
 from miio.exceptions import DeviceException
 
-from .base import DeviceUnreachable, Transport
+from .base import DeviceCommandError, DeviceUnreachable, Transport
 
 log = logging.getLogger(__name__)
 
@@ -117,6 +127,14 @@ def handshake(ip: str, tries: int = 8, timeout: float = 1.5) -> dict:
         s.close()
 
 
+def _device_error_detail(exc: MiioDeviceError) -> tuple[int | None, str]:
+    """Pull the code and message out of a device error, whatever shape it arrives in."""
+    payload = exc.args[0] if exc.args else {}
+    if isinstance(payload, dict):
+        return payload.get("code"), str(payload.get("message", payload))
+    return None, str(payload)
+
+
 class MiioTransport(Transport):
     """A :class:`~limelight.drivers.base.Transport` over miIO, safe for use from any thread."""
 
@@ -164,6 +182,13 @@ class MiioTransport(Transport):
                     reply = self._dev.send(command, params)
                     self.last_success = time.time()
                     return reply
+                except MiioDeviceError as exc:
+                    # The device answered and refused. Retrying a rejected parameter just
+                    # sends the same bad request twice more and reports the wrong cause.
+                    self.last_success = time.time()
+                    code, message = _device_error_detail(exc)
+                    raise DeviceCommandError(
+                        f"{command} rejected by the device: {message}", code) from exc
                 except DeviceException as exc:
                     last = exc
                     log.debug("%s failed (%d/%d): %r", command, attempt, self.retries, exc)
@@ -179,6 +204,7 @@ class MiioTransport(Transport):
                 return self._dev.info().raw
             except DeviceException as exc:
                 raise DeviceUnreachable(f"miIO.info failed: {exc!r}") from exc
+
 
     # ------------------------------------------------------------------ provisioning
 

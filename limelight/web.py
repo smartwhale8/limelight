@@ -85,6 +85,11 @@ PAGE = r"""<!doctype html>
   .days button{padding:5px 8px;font-size:12px;border-radius:7px}
   .days button.sel{background:var(--accent);color:#fff;border-color:var(--accent)}
   .muted{color:var(--muted);font-size:12.5px}
+  button.icon{flex:0 0 40px;width:40px;height:40px;padding:0;border-radius:10px;
+              display:grid;place-items:center;font-size:15px;line-height:1;color:var(--muted)}
+  button.icon:disabled{opacity:.35;cursor:default}
+  .sliderrow{display:flex;align-items:center;gap:10px}
+  .sliderrow input[type=range]{flex:1;min-width:0}
   .warn{color:var(--bad)}
   [hidden]{display:none !important}
 </style>
@@ -137,22 +142,25 @@ PAGE = r"""<!doctype html>
 
 <div class="card" data-cap="sleep_timer">
   <h2>Sleep timer, on the device itself</h2>
-  <div class="muted" style="margin-bottom:10px">
+  <div class="muted" style="margin-bottom:12px">
     Counts down on the device, so it still works after this service is closed.
-    Currently set to <b id="dv">0</b> minutes.
   </div>
-  <div class="grid">
-    <button data-timer="15">15m</button>
-    <button data-timer="30">30m</button>
-    <button data-timer="60">60m</button>
-    <button data-timer="0">Clear</button>
+  <div class="row" style="border-bottom:0;padding-top:0">
+    <label>Switch off after<span class="hint">Drag to zero, or use the cross, to cancel</span></label>
+    <div class="val" id="dvLabel">Off</div>
+  </div>
+  <div class="sliderrow">
+    <input type="range" id="dv" min="0" max="120" step="5" value="0"
+           aria-label="Sleep timer in minutes">
+    <button class="icon" id="dvClear" title="Cancel the sleep timer"
+            aria-label="Cancel the sleep timer">&#10005;</button>
   </div>
 </div>
 
 <div class="card" id="modes">
   <h2>Modes</h2>
   <div class="row" data-cap="eyecare">
-    <label>Eyecare<span class="hint">Flicker-reduced output. The firmware resets brightness; it is restored automatically.</span></label>
+    <label>Eyecare<span class="hint">Flicker-reduced output. The mode sets its own brightness, and moving the brightness slider turns it off.</span></label>
     <div class="sw"><input type="checkbox" id="eyecare"><span></span></div>
   </div>
   <div data-cap="ambient">
@@ -360,7 +368,11 @@ function paint(d){
   }
   if(s.brightness != null) $("#brightVal").textContent = s.brightness + "%";
   if(s.ambient_brightness != null) $("#ambVal").textContent = s.ambient_brightness + "%";
-  if(s.sleep_timer_minutes != null) $("#dv").textContent = s.sleep_timer_minutes;
+  if(s.sleep_timer_minutes != null){
+    if(!dragging) $("#dv").value = Math.min(120, s.sleep_timer_minutes);
+    $("#dvLabel").textContent = timerLabel(s.sleep_timer_minutes);
+    $("#dvClear").disabled = s.sleep_timer_minutes === 0;
+  }
   if(s.eyecare != null) $("#eyecare").checked = s.eyecare;
   if(s.ambient_on != null) $("#ambient").checked = s.ambient_on;
   if(s.night_light != null) $("#night").checked = s.night_light;
@@ -390,11 +402,31 @@ $("#ambient").onchange  = e => post("/ambient",     {on: e.target.checked});
 $("#night").onchange    = e => post("/night_light", {on: e.target.checked});
 $("#reminder").onchange = e => post("/reminder",    {on: e.target.checked});
 
-$$("[data-timer]").forEach(b => b.onclick = () => {
-  const m = +b.dataset.timer;
-  post("/sleep_timer", {minutes: m},
-       m ? "The device will switch off in " + m + " minutes" : "Sleep timer cleared");
-});
+function timerLabel(m){
+  if(!m) return "Off";
+  if(m < 60) return m + " min";
+  const h = Math.floor(m / 60), r = m % 60;
+  return r ? h + " h " + r + " min" : h + " h";
+}
+
+// The timer slider commits on release, like the brightness sliders, so one drag sends one
+// command rather than a datagram per pixel.
+(function wireTimer(){
+  const el = $("#dv");
+  ["mousedown","touchstart"].forEach(ev => el.addEventListener(ev, () => dragging = true));
+  el.addEventListener("input", () => $("#dvLabel").textContent = timerLabel(+el.value));
+  el.addEventListener("change", () => {
+    dragging = false;
+    const m = +el.value;
+    post("/sleep_timer", {minutes: m},
+         m ? "Switching off in " + timerLabel(m) : "Sleep timer cancelled");
+  });
+  $("#dvClear").onclick = () => {
+    el.value = 0;
+    $("#dvLabel").textContent = "Off";
+    post("/sleep_timer", {minutes: 0}, "Sleep timer cancelled");
+  };
+})();
 
 $("#rampCancel").onclick = () => post("/cancel_ramp", {}, "Ramp cancelled");
 $("#srGo").onclick = () => post("/sunrise",

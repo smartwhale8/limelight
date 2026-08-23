@@ -44,7 +44,8 @@ def test_device_endpoint_publishes_capabilities(client):
     body = client.get(f"{V1}/device").json()
     assert "eyecare" in body["capabilities"]
     assert body["brightness_range"] == [1, 100]
-    assert body["scenes"]["3"] == "Reading"
+    assert body["scenes"]["3"] == "Scene 3"
+    assert "4" not in body["scenes"]
 
 
 def test_device_endpoint_does_not_leak_the_token(client):
@@ -83,8 +84,13 @@ def test_brightness(client, transport):
 
 
 def test_scene(client, transport):
-    client.post(f"{V1}/scene", json={"number": 4})
-    assert transport.props["scene_num"] == 4
+    client.post(f"{V1}/scene", json={"number": 3})
+    assert transport.props["scene_num"] == 3
+
+
+def test_scene_four_is_rejected(client):
+    """The device answers param error for scene 4, so the API must not forward it."""
+    assert client.post(f"{V1}/scene", json={"number": 4}).status_code == 422
 
 
 def test_sleep_timer(client, transport):
@@ -113,6 +119,7 @@ def test_night_light_and_reminder(client, transport):
     ("/brightness", {"level": 101}),
     ("/ambient_brightness", {"level": -1}),
     ("/scene", {"number": 0}),
+    ("/scene", {"number": 4}),
     ("/scene", {"number": 5}),
     ("/sleep_timer", {"minutes": -1}),
     ("/sleep_timer", {"minutes": 601}),

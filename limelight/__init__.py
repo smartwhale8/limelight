@@ -9,7 +9,7 @@ Layers, lowest first
 ``drivers.base``            The device contract: capabilities, transport protocol, and
                             the abstract :class:`~limelight.drivers.base.LightDriver`.
 ``drivers.miio_transport``  Encrypted UDP to miIO devices, with retry and rediscovery.
-``drivers.philips_eyecare`` The concrete driver, including firmware quirk compensation.
+``drivers.philips_eyecare`` The concrete driver, including measured device behaviour.
 ``device``                  Builds a driver from stored configuration.
 ``config``                  Persistence of device details and schedules.
 ``scheduler``               Sunrise and fade ramps, and the daily schedule loop.
@@ -21,7 +21,7 @@ second device type to be added without touching the service. See ``docs/ARCHITEC
 for the reasoning and ``docs/DEVICES.md`` for the procedure.
 """
 
-__version__ = "2.0.0"
+__version__ = "2.0.1"
 
 from .config import Config, DeviceConfig, Schedule, ServerConfig
 from .device import (

@@ -43,6 +43,21 @@ class OperationNotSupported(DeviceError):
     """The device has no such capability."""
 
 
+class DeviceCommandError(DeviceError):
+    """The device rejected the command and reported an error code.
+
+    Distinct from :class:`DeviceUnreachable` because it is permanent: the device was
+    reached, understood the request and refused it. Retrying cannot help, and the API maps
+    it to a client error rather than a gateway failure.
+
+    ``code`` is the device's own error number, for example ``-5001`` for a bad parameter.
+    """
+
+    def __init__(self, message: str, code: int | None = None):
+        super().__init__(message)
+        self.code = code
+
+
 class Capability(enum.StrEnum):
     """Discrete features a light may support.
 

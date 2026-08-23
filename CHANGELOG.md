@@ -10,6 +10,60 @@ contract in [docs/API.md](docs/API.md) is what the major version protects.
 
 Nothing yet.
 
+## [2.0.1] - 2026-08-23
+
+Three device behaviours were wrong in the previous release, all found by testing against
+real hardware rather than by reasoning.
+
+### Fixed
+
+- **Eyecare mode could not be switched on.** Enabling it made the lamp's base flash the eye
+  symbol and revert immediately to the brightness markers. The driver re-applied brightness
+  straight after `set_eyecare`, and on this hardware `set_bright` cancels eyecare, so the
+  mode was switched on and off in one operation. Both clients now leave brightness alone
+  around eyecare.
+- **Scene 4 failed with `param error`.** The device accepts 1, 2 and 3 only. The range of
+  1 to 4 was asserted and never checked, and the four scene names were invented. They are
+  now reported as "Scene 1" to "Scene 3", because setting a scene changes `scene_num` and
+  nothing else readable, so a descriptive name would be invention.
+- **A rejected command was retried three times and reported as "unreachable".** A device
+  that answers with an error has been reached and has refused; retrying cannot help. Such
+  errors now raise `DeviceCommandError` immediately, carrying the device's own code, and
+  the API maps them to 400 rather than 503.
+- **The sleep timer control clipped its own label.** Four equal-width buttons meant "Clear"
+  did not fit its quarter of the row. Replaced in both clients with a slider and a cancel
+  icon, which also covers every duration rather than three presets.
+
+### Added
+
+- **`tests/test_hardware.py`**, a suite that runs against a real adopted device. Deselected
+  by default and never run in CI, invoked with `pytest -m hardware`. It captures the lamp's
+  state and restores it afterwards, including when a test fails, and skips when no device is
+  configured. Fourteen tests, covering reachability, control round trips, the eyecare
+  coupling and the scene range.
+
+  This exists because the bugs above were found with throwaway shell scripts that were
+  discarded each time, so nothing stopped them regressing. Device findings now live as
+  tests.
+
+### Changed
+
+- **Corrected a documented finding.** Previous releases described two firmware defects, in
+  which `set_eyecare` and `delay_off` each reset brightness. The measurements were real and
+  the interpretation was wrong. There is one behaviour: enabling eyecare hands brightness to
+  the mode, which ramps to its own level over about three seconds, observed as 25 rising to
+  53 then 70. The apparent second defect came from issuing `delay_off` during that ramp and
+  crediting the ramp to the wrong command. `delay_off` disturbs nothing. The correction is
+  recorded in `docs/PROTOCOL.md` rather than quietly removed.
+- A sunrise or fade ramp switches eyecare off, because ramps step `set_bright`. Documented
+  in `scheduler.py`.
+- `docs/ROADMAP.md` now sets out exactly what a phone-side scheduled wake-up would
+  require, including the parts that cannot be solved in code, so the cost is known before
+  anyone starts.
+- `ResourceWarning` is filtered. python-miio opens a UDP socket per call and closes none;
+  measured over thirty consecutive commands, descriptors do not accumulate, because CPython
+  reclaims each socket by refcounting. There is nothing callers can close.
+
 ## [2.0.0] - 2026-08-23
 
 **The project is renamed from lamplight to limelight.** Entries below this one were written
@@ -176,7 +230,8 @@ First release.
   software: the device discloses its own token to any unauthenticated request on the local
   network, and its setup access point is open and unencrypted.
 
-[Unreleased]: https://github.com/smartwhale8/limelight/compare/v2.0.0...HEAD
+[Unreleased]: https://github.com/smartwhale8/limelight/compare/v2.0.1...HEAD
+[2.0.1]: https://github.com/smartwhale8/limelight/releases/tag/v2.0.1
 [2.0.0]: https://github.com/smartwhale8/limelight/releases/tag/v2.0.0
 [1.1.1]: https://github.com/smartwhale8/limelight/releases/tag/v1.1.1
 [1.1.0]: https://github.com/smartwhale8/limelight/releases/tag/v1.1.0

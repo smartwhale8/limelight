@@ -1,7 +1,6 @@
 package com.smartwhale8.limelight.device
 
 import com.smartwhale8.limelight.miio.MiioClient
-import kotlinx.coroutines.delay
 
 /**
  * Driver for the Philips Eyecare Smart Lamp 2, model `philips.light.sread1`.
@@ -17,21 +16,26 @@ import kotlinx.coroutines.delay
  * | Eyecare mode        | `set_eyecare`     | `"on"` / `"off"`    |
  * | Ambient light       | `enable_amb`      | `"on"` / `"off"`    |
  * | Ambient brightness  | `set_amb_bright`  | 1..100              |
- * | Fixed scene         | `set_user_scene`  | 1..4                |
+ * | Fixed scene         | `set_user_scene`  | 1..3                |
  * | Sleep timer         | `delay_off`       | minutes, 0 cancels  |
  * | Smart night light   | `enable_bl`       | `"on"` / `"off"`    |
  * | Fatigue reminder    | `set_notifyuser`  | `"on"` / `"off"`    |
  *
- * ## Firmware quirks
+ * ## Eyecare mode and brightness are coupled
  *
- * Two commands reset brightness as an undocumented side effect, measured on the hardware:
+ * Two behaviours, measured on the hardware, that a client has to respect:
  *
- * 1. `set_eyecare` reset brightness from 25 to 53.
- * 2. `delay_off` reset brightness from 53 to 70.
+ * 1. **Enabling eyecare hands brightness to the mode.** It ramps to its own level over
+ *    about three seconds: 25 became 53 after one second and 70 after three. That is the
+ *    feature working, not a defect.
+ * 2. **`set_bright` cancels eyecare.** There is no way to hold both.
  *
- * A user enabling eyecare or setting a sleep timer has not asked for a brightness change,
- * so [preserveBrightness] reads brightness first and restores it if the firmware moved it.
- * This mirrors the Python driver in the same repository.
+ * So brightness must not be re-applied after enabling eyecare. An earlier version did
+ * exactly that, believing it was correcting a firmware defect, and the result was that
+ * eyecare switched on and immediately off again: the lamp's base flashed the eye symbol
+ * and reverted to the brightness markers.
+ *
+ * `delay_off` disturbs nothing else.
  */
 class PhilipsEyecareLamp(client: MiioClient) : LampDriver(client) {
 
@@ -47,15 +51,18 @@ class PhilipsEyecareLamp(client: MiioClient) : LampDriver(client) {
             "ambstatus",     // "on" | "off", ambient light
             "ambvalue",      // 1..100, ambient brightness
             "eyecare",       // "on" | "off"
-            "scene_num",     // 1..4
+            "scene_num",     // 1..3
             "bls",           // "on" | "off", smart night light
             "dvalue",        // sleep timer, minutes remaining, 0 when unset
         )
 
-        val SCENE_NAMES = mapOf(1 to "Study", 2 to "Office", 3 to "Reading", 4 to "Bedtime")
-
-        /** Time to let the firmware settle before re-reading brightness after a quirk. */
-        private const val QUIRK_SETTLE_MS = 400L
+        /**
+         * The device accepts 1, 2 and 3. Scene 4 is rejected with `param error` (-5001).
+         *
+         * The names are neutral on purpose: setting a scene changes `scene_num` and
+         * nothing else that can be read back, so naming them would be invention.
+         */
+        val SCENE_NAMES = mapOf(1 to "Scene 1", 2 to "Scene 2", 3 to "Scene 3")
     }
 
     override val model = MODEL
@@ -99,26 +106,18 @@ class PhilipsEyecareLamp(client: MiioClient) : LampDriver(client) {
         else -> null
     }
 
-    // ------------------------------------------------------------ quirk handling
-
-    /** Run [block], then undo any brightness change the firmware made on its own. */
-    private suspend fun preserveBrightness(block: suspend () -> Unit) {
-        val wanted = readState().brightness
-        block()
-        if (wanted == null || wanted <= 0) return
-        delay(QUIRK_SETTLE_MS)
-        val now = readState().brightness
-        if (now != null && now != wanted) {
-            client.send("set_bright", wanted)
-        }
-    }
-
     // ------------------------------------------------------------------- writes
 
     override suspend fun setPower(on: Boolean) {
         client.send("set_power", if (on) "on" else "off")
     }
 
+    /**
+     * Set the main light.
+     *
+     * This **cancels eyecare mode** if it is on. The hardware offers no way to hold both,
+     * so a client that sets brightness is implicitly leaving eyecare.
+     */
     override suspend fun setBrightness(level: Int) {
         client.send("set_bright", clampBrightness(level))
     }
@@ -131,13 +130,18 @@ class PhilipsEyecareLamp(client: MiioClient) : LampDriver(client) {
         client.send("set_amb_bright", clampBrightness(level))
     }
 
-    /** Quirk 1: this command resets main brightness, so it is restored. */
+    /**
+     * Switch eyecare mode.
+     *
+     * Enabling it hands brightness to the mode, which ramps to its own level over about
+     * three seconds. Do not re-apply brightness afterwards: that cancels the mode.
+     */
     override suspend fun setEyecare(on: Boolean) {
-        preserveBrightness { client.send("set_eyecare", if (on) "on" else "off") }
+        client.send("set_eyecare", if (on) "on" else "off")
     }
 
     override suspend fun setScene(number: Int) {
-        require(number in SCENE_NAMES.keys) { "scene must be 1 to 4" }
+        require(number in SCENE_NAMES.keys) { "scene must be 1 to 3" }
         client.send("set_user_scene", number)
     }
 
@@ -153,10 +157,9 @@ class PhilipsEyecareLamp(client: MiioClient) : LampDriver(client) {
      * The device's own countdown, in minutes. Zero cancels it.
      *
      * This runs on the lamp, so it keeps working when the phone is away or switched off.
-     * Quirk 2 applies, so brightness is restored afterwards.
+     * It disturbs nothing else.
      */
     override suspend fun setSleepTimer(minutes: Int) {
-        val safe = minutes.coerceAtLeast(0)
-        preserveBrightness { client.send("delay_off", safe) }
+        client.send("delay_off", minutes.coerceAtLeast(0))
     }
 }

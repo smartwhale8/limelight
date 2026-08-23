@@ -140,8 +140,8 @@ class Schedule:
         self.days = sorted(set(self.days))
         self.duration_min = max(0, min(600, int(self.duration_min)))
         self.target_brightness = max(1, min(100, int(self.target_brightness)))
-        if self.scene is not None and not (1 <= int(self.scene) <= 4):
-            raise ValueError("scene must be 1..4 or null")
+        if self.scene is not None and not (1 <= int(self.scene) <= 3):
+            raise ValueError("scene must be 1..3 or null")
 
     @property
     def service_driven(self) -> bool:

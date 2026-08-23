@@ -162,7 +162,7 @@ print(client.get("/api/v1/state").json())
 |---|---|
 | `props={...}` | Set the starting state |
 | `fail_after=N` | Every command past the Nth raises `DeviceUnreachable`, for error paths |
-| `quirks=False` | Disable the firmware defects, to prove compensation is what fixes them |
+| `couple_eyecare=False` | Drop the eyecare/brightness coupling, to isolate something else |
 
 ---
 
@@ -171,15 +171,16 @@ print(client.get("/api/v1/state").json())
 ```bash
 pytest                              # everything
 pytest tests/test_drivers.py        # one file
-pytest -k quirk                     # by name
+pytest -k eyecare                   # by name
 pytest --cov --cov-report=term-missing
 pytest -x -vv                       # stop at the first failure, verbose
 ```
 
 | File | Covers |
 |---|---|
+| `test_hardware.py` | Real device behaviour. Deselected unless `-m hardware` is given |
 | `test_dependency_contract.py` | The parts of python-miio we rely on, so an upgrade fails loudly |
-| `test_drivers.py` | Driver behaviour, capabilities, and quirk compensation |
+| `test_drivers.py` | Driver behaviour, capabilities, and the eyecare/brightness coupling |
 | `test_transport.py` | Wire protocol parsing, against a real loopback UDP socket |
 | `test_scheduler.py` | Ramp arithmetic, cancellation, due-time evaluation |
 | `test_config.py` | Validation, persistence, file permissions |
@@ -207,6 +208,29 @@ for a ramp that finishes in under a second.
 **Wait for completion, do not sleep and hope.** Use the `wait_for_ramp` helper in
 `test_scheduler.py`, which polls `ramp.active` with a timeout.
 
+### The hardware suite
+
+Everything else runs against a fake, which is what lets CI verify the project with no lamp.
+A fake can only reproduce behaviour someone already understood, so it cannot catch a
+misunderstanding of the device. `tests/test_hardware.py` closes that gap:
+
+```bash
+pytest -m hardware          # against the device in ~/.config/limelight
+```
+
+It is deselected by default and never runs in CI. It **changes the state of a real lamp**,
+so a fixture captures everything first and restores it afterwards, including when a test
+fails. It skips rather than fails when no device is adopted or the device is unreachable.
+
+This suite exists because of a real bug. The driver used to re-apply brightness after
+enabling eyecare, believing it was correcting a firmware defect; because `set_bright`
+cancels eyecare, that made the mode impossible to switch on. Every probe that established
+the true behaviour had been written ad hoc in a shell and thrown away, so nothing caught
+the regression. Those probes are now tests.
+
+Keep new findings here rather than in a scratch script. If you measure something about a
+device, that measurement is worth more as a test than as a paragraph.
+
 ### Testing the transport
 
 `test_transport.py` binds a real UDP socket on loopback and answers handshakes with
@@ -233,15 +257,22 @@ def set_sleep_timer(self, minutes: int):
 
 # Useful
 def set_sleep_timer(self, minutes: int):
-    """Firmware cut-off after ``minutes``; 0 cancels it.
+    """Device cut-off after ``minutes``; 0 cancels it.
 
-    Runs on the device, so it survives this application exiting. Quirk 2 applies.
+    The countdown runs on the device, so it survives this application exiting. It does
+    not disturb brightness or any other setting.
     """
 ```
 
 **Record measurements with their numbers.** "Observed 25 becoming 53" is worth far more
 than "resets brightness", because it lets the next reader confirm the behaviour still
 holds.
+
+**Separate the measurement from the interpretation.** Both are worth writing down, but
+they are not the same thing and the second is where mistakes live. This project once
+recorded two firmware defects that did not exist: the measurements were correct, but one
+command was issued during another's ramp and the ramp was credited to the wrong command.
+The compensation built on that reading then broke the feature it was meant to protect.
 
 **Comment surprises inline.** Where code looks wrong but is right, say why:
 

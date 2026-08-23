@@ -58,10 +58,12 @@ def test_numeric_fields_are_clamped():
 
 
 def test_scene_must_be_valid_or_absent():
+    """The device accepts 1 to 3; 4 is rejected with param error."""
     Schedule(scene=None).validate()
-    Schedule(scene=4).validate()
-    with pytest.raises(ValueError, match="scene must be"):
-        Schedule(scene=5).validate()
+    Schedule(scene=3).validate()
+    for bad in (0, 4, 5):
+        with pytest.raises(ValueError, match="scene must be"):
+            Schedule(scene=bad).validate()
 
 
 # -------------------------------------------------------------- service-driven flag

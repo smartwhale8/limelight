@@ -37,7 +37,7 @@
 - [ ] Capability set matches what the hardware actually does, with nothing overclaimed
 - [ ] Registered via `@register` and imported in `limelight/drivers/__init__.py`
 - [ ] Command surface documented in the module docstring
-- [ ] Any firmware defect found is documented with the values observed
+- [ ] Any device behaviour found is documented with the values observed, keeping the measurement separate from the interpretation
 - [ ] Added to the supported devices table in the README
 
 ## Notes for the reviewer

@@ -40,6 +40,45 @@ Client-side notes are collected in
 cleartext-HTTP configuration Android requires and the weekday numbering difference between
 Python and `java.time`.
 
+### Scheduled wake-up on the phone
+
+Not planned for now, and recorded here so the cost is known when it is wanted. The app has
+no ramp, schedule or alarm code at all today; the lamp's own sleep timer is included
+because the device counts it down itself.
+
+The difficulty is not the ramp, which is a loop sending `set_bright`. It is that Android
+is hostile to a twenty-minute network operation starting at a fixed time on a sleeping
+phone. Everything below is required, not optional:
+
+| Requirement | Why | Cost |
+|---|---|---|
+| `AlarmManager.setExactAndAllowWhileIdle` | Only exact alarms survive Doze. `setRepeating` is inexact and may drift by many minutes. | Small |
+| `SCHEDULE_EXACT_ALARM` permission | Android 12 and later require it, and 13 and later require the **user** to grant it in system settings. The app must detect refusal and explain. | Small, plus an onboarding screen |
+| A foreground service | The ramp runs for twenty minutes. A background service is killed. A foreground service needs a persistent notification the user cannot dismiss. | Medium |
+| `FOREGROUND_SERVICE` and `FOREGROUND_SERVICE_SPECIAL_USE` | Android 14 requires a declared service type, and "special use" needs a justification at Play review if it is ever published. | Small, plus review risk |
+| Battery-optimisation exemption | Without it, some devices defer the alarm anyway. Requesting it shows a system dialog and Play restricts the justification. | Small, plus review risk |
+| `WifiLock` held during the ramp | Phones commonly drop Wi-Fi when the screen is off. Without it, the datagrams go nowhere. | Small |
+| Handling OEM battery managers | Xiaomi, Samsung, Huawei and others kill background work regardless of the platform APIs. There is no programmatic fix, only instructing the user per manufacturer. | Ongoing, and never fully solved |
+
+Two consequences worth weighing before starting:
+
+**It cannot be made fully reliable.** The last row has no engineering answer. An alarm that
+works on one phone and silently does not on another is arguably worse than no alarm,
+because the user stops setting a real one.
+
+**The phone must be on the same Wi-Fi at the moment it fires.** Away for a night, or on
+mobile data, and nothing happens. The Python service on a machine that never leaves the
+house does not have that problem.
+
+If it is built anyway, the honest design is: schedule with an exact alarm, run the ramp in
+a foreground service holding a `WifiLock`, and state plainly in the interface that the
+alarm depends on the phone being at home, awake and unrestricted. A `service_driven`-style
+warning, as the HTTP API already carries.
+
+**The alternative that does work today** is the Python service on an always-on host. It
+runs unchanged on a Raspberry Pi, and `packaging/systemd/install.sh` installs it. That is
+one evening of setup against an open-ended fight with battery management.
+
 Server-side work that would help, none of it breaking:
 
 - **mDNS advertisement**, so a client finds the service without the user typing an address.

@@ -61,7 +61,7 @@ Hardware details for that model:
 | Encryption | AES-128-CBC, key derived from a 16-byte device token |
 | Lights | Main LED panel and a separate ambient LED in the base |
 | Brightness range | 1 to 100, both lights |
-| Scenes | 4 fixed: Study, Office, Reading, Bedtime |
+| Scenes | 3 fixed. Their effect is not exposed by the protocol, so they are reported as Scene 1 to 3. |
 | Colour | None. Fixed white, no colour temperature control. |
 | Native transitions | None. Every command takes effect immediately. |
 | State notification | None. State must be polled. |
@@ -183,9 +183,10 @@ A write names a method and its arguments, and answers `{"result": ["ok"]}`.
 Reading everything in one datagram is not a nicety. The device is a single-threaded
 microcontroller on a connectionless transport, and one request per property drops datagrams.
 
-The full property list and command surface for this lamp, including **two undocumented
-firmware defects where `set_eyecare` and `delay_off` each reset brightness**, are in
-[docs/PROTOCOL.md](docs/PROTOCOL.md).
+The full property list and command surface for this lamp is in
+[docs/PROTOCOL.md](docs/PROTOCOL.md), including one coupling a client must respect:
+**enabling eyecare hands brightness to the mode, and setting brightness cancels eyecare.**
+The two cannot be held at once.
 
 ### Capabilities: how clients avoid hard-coding a feature set
 
@@ -297,7 +298,7 @@ limelight status                          # current device state
 limelight on --brightness 60
 limelight off
 limelight brightness 35
-limelight scene 3                         # 1 Study, 2 Office, 3 Reading, 4 Bedtime
+limelight scene 3                         # the device accepts 1, 2 or 3
 limelight eyecare on
 limelight ambient on --level 50
 limelight timer 45                        # device countdown; survives limelight exiting

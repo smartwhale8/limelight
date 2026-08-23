@@ -30,6 +30,9 @@ known traps.
 ## What a good pull request contains
 
 1. **Tests that run without hardware.** Use or extend `FakeTransport`. CI has no lamp.
+   If you measured something on a real device, add it to `tests/test_hardware.py` as well;
+   that suite is deselected by default and is where device findings belong, rather than in
+   a scratch script that gets thrown away.
 2. **Documentation for anything user-visible.** A new endpoint belongs in
    [docs/API.md](docs/API.md); a device belongs in the README table and
    [docs/PROTOCOL.md](docs/PROTOCOL.md).
@@ -43,8 +46,13 @@ known traps.
 records the numbers observed. If you cannot verify something, mark it unverified rather
 than stating it.
 
-**Document the traps.** Firmware defects, platform restrictions and upstream bugs cost time
-to find. Write down what you found, with its numbers, so nobody pays twice.
+**Document the traps.** Firmware behaviour, platform restrictions and upstream bugs cost
+time to find. Write down what you found, with its numbers, so nobody pays twice.
+
+**Keep the measurement separate from the interpretation.** Record what you observed and
+what you concluded as two different things. This project once documented two firmware
+defects that did not exist, because a command was issued during another's ramp and the
+ramp was credited to the wrong command.
 
 **Respect the layering rule.** Nothing above `limelight/drivers/` may reference a specific
 device, miIO command, or model string. See
@@ -73,7 +81,7 @@ not enough, because the value may already have been fetched.
 ```bash
 pytest                              # everything
 pytest tests/test_drivers.py        # one file
-pytest -k quirk                     # by name
+pytest -k eyecare                   # by name
 pytest --cov --cov-report=term-missing
 ```
 

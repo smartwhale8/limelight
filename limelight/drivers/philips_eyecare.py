@@ -13,32 +13,38 @@ Main brightness       ``set_bright``        1..100
 Eyecare mode          ``set_eyecare``       ``"on"`` / ``"off"``
 Ambient light         ``enable_amb``        ``"on"`` / ``"off"``
 Ambient brightness    ``set_amb_bright``    1..100
-Fixed scene           ``set_user_scene``    1..4
+Fixed scene           ``set_user_scene``    1..3, the device rejects 4
 Sleep timer           ``delay_off``         minutes, 0 cancels
 Smart night light     ``enable_bl``         ``"on"`` / ``"off"``
 Fatigue reminder      ``set_notifyuser``    ``"on"`` / ``"off"``
 Read state            ``get_prop``          the property list in :data:`PROPS`
 ====================  ====================  ==========================================
 
-Firmware quirks, measured rather than assumed
----------------------------------------------
-1. ``set_eyecare`` resets ``bright`` to a stored value. Observed 25 becoming 53.
-2. ``delay_off`` also resets ``bright``. Observed 53 becoming 70.
+Eyecare mode and brightness are coupled
+---------------------------------------
+Two behaviours, measured on the hardware, that a client has to respect:
 
-Neither is documented by the vendor. :meth:`PhilipsEyecareLamp._preserve_brightness`
-reads brightness before such a call and re-applies it if the firmware moved it, because
-a user setting a sleep timer did not ask for a brightness change.
+1. **Enabling eyecare hands brightness to the mode.** ``set_eyecare on`` makes the lamp
+   ramp to its own level over about three seconds. Observed 25 rising to 53 after one
+   second and 70 after three. This is the feature working, not a defect.
+2. **``set_bright`` cancels eyecare.** Sending a brightness while eyecare is on turns the
+   mode off. There is no way to hold both.
+
+The consequence is that brightness must **not** be re-applied after enabling eyecare. An
+earlier version of this driver did exactly that, believing it was correcting a firmware
+defect, and the effect was that eyecare switched on and immediately off again: the lamp's
+base briefly showed the eye symbol and then reverted to the brightness markers.
+
+``delay_off`` does not affect brightness at all. The apparent evidence that it did came
+from issuing it during the eyecare ramp above and attributing the ramp to the wrong
+command.
 """
 
 from __future__ import annotations
 
-import logging
-import time
 from typing import Any, ClassVar
 
-from .base import Capability, LightDriver, LightState, Transport, register
-
-log = logging.getLogger(__name__)
+from .base import Capability, LightDriver, LightState, register
 
 #: Properties readable in one ``get_prop`` call, in the order the firmware returns them.
 PROPS = [
@@ -48,16 +54,18 @@ PROPS = [
     "ambstatus",     # "on" | "off", ambient light
     "ambvalue",      # 1..100, ambient brightness
     "eyecare",       # "on" | "off"
-    "scene_num",     # 1..4
+    "scene_num",     # 1..3
     "bls",           # "on" | "off", smart night light
     "dvalue",        # sleep timer, minutes remaining, 0 when unset
 ]
 
-SCENES: dict[int, str] = {1: "Study", 2: "Office", 3: "Reading", 4: "Bedtime"}
-
-#: Seconds to wait after a quirk-prone command before re-reading brightness.
-QUIRK_SETTLE_SECONDS = 0.4
-
+#: The device accepts 1, 2 and 3. Scene 4 is rejected with ``param error`` (-5001).
+#:
+#: The names are deliberately neutral. Setting a scene changes ``scene_num`` and nothing
+#: else that is readable: brightness, eyecare and the ambient light are unchanged, and
+#: that holds across a power cycle and with eyecare enabled. Whatever a scene alters is
+#: not exposed through ``get_prop``, so naming them would be invention.
+SCENES: dict[int, str] = {1: "Scene 1", 2: "Scene 2", 3: "Scene 3"}
 
 @register
 class PhilipsEyecareLamp(LightDriver):
@@ -78,11 +86,6 @@ class PhilipsEyecareLamp(LightDriver):
         Capability.REMINDER,
         Capability.SLEEP_TIMER,
     })
-
-    def __init__(self, transport: Transport, compensate_quirks: bool = True):
-        """``compensate_quirks=False`` disables brightness restoration, for protocol study."""
-        super().__init__(transport)
-        self.compensate_quirks = compensate_quirks
 
     # ------------------------------------------------------------------------- reads
 
@@ -105,27 +108,17 @@ class PhilipsEyecareLamp(LightDriver):
             raw=dict(values),
         )
 
-    # ------------------------------------------------------------- quirk compensation
-
-    def _preserve_brightness(self, call) -> Any:
-        """Run ``call``, then undo any brightness change the firmware made unbidden."""
-        if not self.compensate_quirks:
-            return call()
-        want = self.state().brightness
-        reply = call()
-        time.sleep(QUIRK_SETTLE_SECONDS)
-        now = self.state().brightness
-        if want and now != want:
-            log.info("firmware moved brightness %s to %s, restoring", now, want)
-            self.transport.send("set_bright", [int(want)])
-        return reply
-
     # ------------------------------------------------------------------------ writes
 
     def set_power(self, on: bool) -> Any:
         return self.transport.send("set_power", ["on" if on else "off"])
 
     def set_brightness(self, level: int) -> Any:
+        """Set the main light.
+
+        Note that this **cancels eyecare mode** if it is on. The hardware offers no way to
+        hold both, so a client that sets brightness is implicitly leaving eyecare.
+        """
         return self.transport.send("set_bright", [self.clamp_brightness(level)])
 
     def set_ambient(self, on: bool) -> Any:
@@ -135,11 +128,19 @@ class PhilipsEyecareLamp(LightDriver):
         return self.transport.send("set_amb_bright", [self.clamp_brightness(level)])
 
     def set_eyecare(self, on: bool) -> Any:
-        # Quirk 1: this command resets main brightness.
-        return self._preserve_brightness(
-            lambda: self.transport.send("set_eyecare", ["on" if on else "off"]))
+        """Switch eyecare mode.
+
+        Enabling it hands brightness to the mode, which ramps to its own level over about
+        three seconds. Do not re-apply brightness afterwards: that cancels the mode.
+        """
+        return self.transport.send("set_eyecare", ["on" if on else "off"])
 
     def set_scene(self, number: int) -> Any:
+        """Select a fixed scene.
+
+        Only 1, 2 and 3 are accepted; the device rejects anything else with
+        ``param error``. Setting a scene changes no other readable property.
+        """
         if number not in SCENES:
             raise ValueError(f"scene must be one of {sorted(SCENES)}")
         return self.transport.send("set_user_scene", [int(number)])
@@ -151,10 +152,10 @@ class PhilipsEyecareLamp(LightDriver):
         return self.transport.send("set_notifyuser", ["on" if on else "off"])
 
     def set_sleep_timer(self, minutes: int) -> Any:
-        """Firmware cut-off after ``minutes``; 0 cancels it.
+        """Device cut-off after ``minutes``; 0 cancels it.
 
-        Runs on the device, so it survives this application exiting. Quirk 2 applies.
+        The countdown runs on the device, so it survives this application exiting. It does
+        not disturb brightness or any other setting.
         """
         minutes = max(0, int(minutes))
-        return self._preserve_brightness(
-            lambda: self.transport.send("delay_off", [minutes]))
+        return self.transport.send("delay_off", [minutes])

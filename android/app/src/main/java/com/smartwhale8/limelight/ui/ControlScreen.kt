@@ -18,6 +18,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.Power
 import androidx.compose.material3.Button
@@ -25,6 +26,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
@@ -48,6 +50,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.smartwhale8.limelight.device.Capability
+
+/** Longest sleep timer the slider offers. The device itself accepts more. */
+private const val TIMER_MAX_MINUTES = 120
+
+/** Slider granularity, so a drag lands on a round number. */
+private const val TIMER_STEP_MINUTES = 5
 
 /**
  * Controls for a connected lamp.
@@ -264,29 +272,75 @@ private fun SliderCard(
     }
 }
 
+/** Format a duration the way the interface shows it. */
+private fun timerLabel(minutes: Int): String = when {
+    minutes <= 0 -> "Off"
+    minutes < 60 -> "$minutes min"
+    minutes % 60 == 0 -> "${minutes / 60} h"
+    else -> "${minutes / 60} h ${minutes % 60} min"
+}
+
+/**
+ * The sleep timer, as a slider with a cancel action.
+ *
+ * An earlier version used four equal-width buttons, and "Clear" is longer than "15m", so
+ * the label clipped inside its quarter of the row. A slider also covers every duration
+ * rather than three presets, and cancelling is just dragging to zero.
+ */
 @Composable
 private fun SleepTimerCard(minutesRemaining: Int, onSet: (Int) -> Unit) {
+    var dragging by remember { mutableStateOf(false) }
+    var position by remember { mutableFloatStateOf(minutesRemaining.toFloat()) }
+    if (!dragging && position.toInt() != minutesRemaining) {
+        position = minutesRemaining.coerceAtMost(TIMER_MAX_MINUTES).toFloat()
+    }
+
     SectionCard(title = "Sleep timer") {
-        Text(
-            text = if (minutesRemaining > 0)
-                "The lamp switches off in $minutesRemaining minutes."
-            else "Runs on the lamp itself, so it keeps working with the phone away.",
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        Spacer(Modifier.height(12.dp))
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            listOf(15, 30, 60).forEach { minutes ->
-                OutlinedButton(
-                    onClick = { onSet(minutes) },
-                    modifier = Modifier.weight(1f),
-                ) { Text("${minutes}m") }
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text("Switch off after", style = MaterialTheme.typography.bodyLarge)
+                Text(
+                    "Counts down on the lamp, so it works with the phone away",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
             }
-            OutlinedButton(
-                onClick = { onSet(0) },
-                enabled = minutesRemaining > 0,
+            Text(
+                timerLabel(position.toInt()),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+            )
+        }
+        Spacer(Modifier.height(4.dp))
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Slider(
+                value = position,
+                onValueChange = {
+                    dragging = true
+                    position = it
+                },
+                onValueChangeFinished = {
+                    dragging = false
+                    onSet(position.toInt())
+                },
+                valueRange = 0f..TIMER_MAX_MINUTES.toFloat(),
+                steps = (TIMER_MAX_MINUTES / TIMER_STEP_MINUTES) - 1,
                 modifier = Modifier.weight(1f),
-            ) { Text("Clear") }
+            )
+            Spacer(Modifier.width(4.dp))
+            IconButton(
+                onClick = {
+                    position = 0f
+                    onSet(0)
+                },
+                enabled = minutesRemaining > 0,
+            ) {
+                Icon(
+                    Icons.Filled.Close,
+                    contentDescription = "Cancel the sleep timer",
+                    modifier = Modifier.size(20.dp),
+                )
+            }
         }
     }
 }
@@ -305,7 +359,7 @@ private fun ModesCard(state: UiState, vm: LampViewModel) {
         if (caps.contains(Capability.EYECARE)) {
             ToggleRow(
                 title = "Eyecare",
-                subtitle = "Flicker-reduced output",
+                subtitle = "Sets its own brightness; the slider turns it off",
                 checked = lamp?.eyecare == true,
                 onChange = { vm.setEyecare(it) },
             )

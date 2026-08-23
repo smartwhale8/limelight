@@ -64,7 +64,7 @@ serves either, and a MIoT device is a driver that issues different payloads. Not
 |---|---|---|---|
 | Transport | `drivers/miio_transport.py` | Bytes on the wire, retry, rediscovery | UDP, AES, tokens |
 | Contract | `drivers/base.py` | What a light can do | Nothing device-specific |
-| Driver | `drivers/philips_eyecare.py` | One device's command set and quirks | miIO method names |
+| Driver | `drivers/philips_eyecare.py` | One device's command set and behaviour | miIO method names |
 | Factory | `device.py` | Configuration to a working driver | The model registry |
 | Behaviour | `scheduler.py` | Ramps and the timetable | The abstract driver only |
 | Interface | `server.py`, `cli.py`, `web.py` | Presentation | The abstract driver only |
@@ -87,8 +87,8 @@ on demand, so that approach is not viable here.
 `Transport` is a `typing.Protocol`. Anything with `send`, `info` and `address` satisfies
 it, so `tests/fakes.py` provides an in-memory device and the entire suite runs with no
 hardware and no network. That is not only convenient for CI; it means the two firmware
-quirks below have regression tests, which would be impossible against real hardware in a
-pipeline.
+coupling described below has regression tests, which would be impossible to run against
+real hardware in a pipeline.
 
 ### The service is built by a factory
 
@@ -138,17 +138,23 @@ labelled as such throughout.
 Device state is never cached. A lamp has a physical touch control, so any cache would go
 stale the moment somebody touched it.
 
-## The two firmware quirks
+## Eyecare mode and brightness are coupled
 
-Measured on firmware 1.2.8, undocumented by the vendor, and the reason
-`_preserve_brightness` exists in the driver:
+Measured on firmware 1.2.8, and the reason the driver deliberately does **not** touch
+brightness around eyecare:
 
-1. `set_eyecare` resets `bright` to a stored value. Observed 25 becoming 53.
-2. `delay_off` resets `bright` as well. Observed 53 becoming 70.
+1. **Enabling eyecare hands brightness to the mode**, which ramps to its own level over
+   about three seconds. Observed 25 rising to 53 after one second and 70 after three.
+2. **`set_bright` cancels eyecare.** There is no way to hold both.
 
-The driver reads brightness before either call and re-applies it if the firmware moved it.
-`tests/test_drivers.py` covers both, and `tests/fakes.py` reproduces the misbehaviour on
-purpose, so a fake that behaved better than the hardware cannot let the compensation rot.
+An earlier driver read brightness before `set_eyecare` and re-applied it afterwards,
+believing it was correcting a firmware defect. Because of rule 2, that switched eyecare
+straight back off: the lamp's base flashed the eye symbol and reverted to the brightness
+markers. The apparent second defect, `delay_off` moving brightness, was the same eyecare
+ramp observed through a command issued while it was still in progress.
+
+`tests/fakes.py` models both rules, so a driver that re-applies brightness fails the suite
+rather than reaching hardware.
 
 ## Extending it
 

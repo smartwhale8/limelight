@@ -103,7 +103,7 @@ Static description. Poll this once per session, not per refresh.
   "display_name": "Philips Eyecare Smart Lamp 2",
   "capabilities": ["ambient", "ambient_brightness", "brightness", "eyecare",
                    "night_light", "power", "reminder", "scenes", "sleep_timer"],
-  "scenes": {"1": "Study", "2": "Office", "3": "Reading", "4": "Bedtime"},
+  "scenes": {"1": "Scene 1", "2": "Scene 2", "3": "Scene 3"},
   "brightness_range": [1, 100],
   "address": "192.168.1.42",
   "name": "Desk lamp",
@@ -135,7 +135,7 @@ while your interface is in the foreground.
     "device_id": 12345678,
     "capabilities": ["ambient", "ambient_brightness", "brightness", "eyecare",
                      "night_light", "power", "reminder", "scenes", "sleep_timer"],
-    "scenes": {"1": "Study", "2": "Office", "3": "Reading", "4": "Bedtime"}
+    "scenes": {"1": "Scene 1", "2": "Scene 2", "3": "Scene 3"}
   },
   "ramp": {
     "active": false, "kind": "", "label": "",
@@ -185,7 +185,7 @@ All take `POST` with a JSON body and return `{"ok": true, "result": ["ok"]}`.
 | `/api/v1/ambient` | `{"on": true}` | `ambient` |
 | `/api/v1/ambient_brightness` | `{"level": 1..100}` | `ambient_brightness` |
 | `/api/v1/eyecare` | `{"on": true}` | `eyecare` |
-| `/api/v1/scene` | `{"number": 1..4}` | `scenes` |
+| `/api/v1/scene` | `{"number": 1..3}` | `scenes` |
 | `/api/v1/night_light` | `{"on": true}` | `night_light` |
 | `/api/v1/reminder` | `{"on": true}` | `reminder` |
 | `/api/v1/sleep_timer` | `{"minutes": 0..600}` | `sleep_timer` |
@@ -281,7 +281,7 @@ Creates when `id` is absent, updates when present. An unknown `id` returns `404`
 | `duration_min` | int | `20` | 0 to 600 |
 | `target_brightness` | int | `100` | 1 to 100 |
 | `ambient` | bool | `false` | |
-| `scene` | int or null | `null` | 1 to 4 |
+| `scene` | int or null | `null` | 1 to 3 |
 
 | `kind` | Behaviour | Survives the server stopping |
 |---|---|---|

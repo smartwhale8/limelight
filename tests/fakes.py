@@ -1,12 +1,17 @@
 """A fake miIO device, so the suite runs with no hardware and no network.
 
 :class:`FakeTransport` implements :class:`~limelight.drivers.base.Transport` against an
-in-memory property dictionary. It reproduces the two firmware defects the real lamp has,
-because a fake that behaves better than the hardware would let the compensation code rot
-undetected:
+in-memory property dictionary. It reproduces the real coupling between eyecare mode and
+brightness, measured on the hardware, because a fake that behaved more conveniently than
+the device would hide exactly the bug this models:
 
-1. ``set_eyecare`` resets ``bright`` to :data:`QUIRK_BRIGHTNESS`.
-2. ``delay_off`` resets ``bright`` to :data:`QUIRK_BRIGHTNESS`.
+1. ``set_eyecare on`` hands brightness to the mode, which moves it to
+   :data:`EYECARE_BRIGHTNESS`.
+2. ``set_bright`` **cancels eyecare**. There is no way to hold both.
+
+An earlier driver re-applied brightness after enabling eyecare, believing it was
+correcting a firmware defect. The effect was that eyecare switched on and immediately off
+again. Modelling rule 2 here is what makes that a test failure rather than a bug report.
 
 It also records every command in :attr:`FakeTransport.calls`, which is how tests assert
 on what was sent rather than only on the resulting state.
@@ -18,8 +23,8 @@ from typing import Any
 
 from limelight.drivers.base import DeviceUnreachable, Transport
 
-#: The value the real firmware snaps brightness to after a quirk-prone command.
-QUIRK_BRIGHTNESS = 70
+#: The level eyecare mode ramps brightness to on the real hardware.
+EYECARE_BRIGHTNESS = 70
 
 DEFAULT_PROPS: dict[str, Any] = {
     "power": "off",
@@ -47,13 +52,17 @@ class FakeTransport(Transport):
     """An in-memory stand-in for :class:`~limelight.drivers.miio_transport.MiioTransport`."""
 
     def __init__(self, props: dict | None = None, ip: str = "192.168.1.50",
-                 fail_after: int | None = None, quirks: bool = True):
-        """``fail_after`` makes every command past that count raise, to test error paths."""
+                 fail_after: int | None = None, couple_eyecare: bool = True):
+        """``fail_after`` makes every command past that count raise, to test error paths.
+
+        ``couple_eyecare=False`` drops the eyecare/brightness coupling, for tests that
+        want to isolate something else.
+        """
         self.props = dict(props or DEFAULT_PROPS)
         self._ip = ip
         self.calls: list[tuple[str, Any]] = []
         self.fail_after = fail_after
-        self.quirks = quirks
+        self.couple_eyecare = couple_eyecare
         self.info_calls = 0
 
     @property
@@ -79,6 +88,9 @@ class FakeTransport(Transport):
             self.props["power"] = p[0]
         elif command == "set_bright":
             self.props["bright"] = int(p[0])
+            if self.couple_eyecare:
+                # Measured: setting brightness cancels eyecare on the real device.
+                self.props["eyecare"] = "off"
         elif command == "set_amb_bright":
             self.props["ambvalue"] = int(p[0])
         elif command == "enable_amb":
@@ -91,12 +103,12 @@ class FakeTransport(Transport):
             self.props["scene_num"] = int(p[0])
         elif command == "set_eyecare":
             self.props["eyecare"] = p[0]
-            if self.quirks:                      # quirk 1
-                self.props["bright"] = QUIRK_BRIGHTNESS
+            if self.couple_eyecare and p[0] == "on":
+                # Measured: the mode takes brightness to its own level.
+                self.props["bright"] = EYECARE_BRIGHTNESS
         elif command == "delay_off":
+            # Measured: this disturbs nothing else.
             self.props["dvalue"] = int(p[0])
-            if self.quirks:                      # quirk 2
-                self.props["bright"] = QUIRK_BRIGHTNESS
         elif command == "miIO.config_router":
             return 0                             # the real firmware answers with an int
         else:

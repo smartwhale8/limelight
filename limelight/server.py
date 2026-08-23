@@ -49,6 +49,7 @@ from .config import Config, Schedule, default_schedules
 from .device import build_driver
 from .drivers.base import (
     Capability,
+    DeviceCommandError,
     DeviceError,
     DeviceUnreachable,
     LightDriver,
@@ -78,7 +79,7 @@ class Level(BaseModel):
 class SceneBody(BaseModel):
     """A fixed scene selection."""
 
-    number: int = Field(ge=1, le=4, description="Fixed scene number")
+    number: int = Field(ge=1, le=3, description="Fixed scene number; the device accepts 1 to 3")
 
 
 class Minutes(BaseModel):
@@ -93,7 +94,7 @@ class SunriseBody(BaseModel):
     duration_min: float = Field(default=20, gt=0, le=600, description="Ramp length in minutes")
     target: int = Field(default=100, ge=1, le=100, description="Final brightness")
     ambient: bool = Field(default=False, description="Also switch the ambient light on")
-    scene: int | None = Field(default=None, ge=1, le=4)
+    scene: int | None = Field(default=None, ge=1, le=3)
 
 
 class FadeBody(BaseModel):
@@ -115,7 +116,7 @@ class ScheduleBody(BaseModel):
     duration_min: int = Field(default=20, ge=0, le=600)
     target_brightness: int = Field(default=100, ge=1, le=100)
     ambient: bool = False
-    scene: int | None = Field(default=None, ge=1, le=4)
+    scene: int | None = Field(default=None, ge=1, le=3)
 
 
 # ------------------------------------------------------------------------- factory
@@ -181,6 +182,9 @@ def create_app(config: Config, driver: LightDriver,
                 driver.require(capability)
             return {"ok": True, "result": fn()}
         except OperationNotSupported as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+        except DeviceCommandError as exc:
+            # The device was reached and refused the request, so this is a client error.
             raise HTTPException(status_code=400, detail=str(exc)) from exc
         except DeviceUnreachable as exc:
             raise HTTPException(status_code=503, detail=str(exc)) from exc

@@ -1,8 +1,9 @@
-"""Driver behaviour, including the firmware quirk compensation.
+"""Driver behaviour, including the coupling between eyecare mode and brightness.
 
-The quirk tests are the most valuable in the suite. They encode hardware behaviour that
-is not documented anywhere by the vendor and was only found by measurement, so a
-regression here would be silent and confusing.
+The eyecare tests are the most valuable in the suite. They encode hardware behaviour found
+only by measurement, and one of them is a regression test for a real bug: an earlier driver
+re-applied brightness after enabling eyecare, which cancelled the mode, so eyecare could
+not be switched on at all.
 """
 
 from __future__ import annotations
@@ -18,7 +19,7 @@ from limelight.drivers.base import (
 )
 from limelight.drivers.philips_eyecare import PROPS, SCENES, PhilipsEyecareLamp
 
-from .fakes import QUIRK_BRIGHTNESS, FakeTransport
+from .fakes import EYECARE_BRIGHTNESS
 
 # ------------------------------------------------------------------------- registry
 
@@ -43,7 +44,7 @@ def test_state_decodes_every_property(driver, transport):
     s = driver.state()
     assert (s.on, s.brightness, s.eyecare) == (True, 42, True)
     assert (s.ambient_on, s.ambient_brightness) == (True, 30)
-    assert (s.scene, s.scene_name) == (3, "Reading")
+    assert (s.scene, s.scene_name) == (3, "Scene 3")
     assert (s.night_light, s.reminder, s.sleep_timer_minutes) == (False, True, 12)
 
 
@@ -76,9 +77,11 @@ def test_brightness_is_clamped_to_the_device_range(driver, transport):
     assert transport.sent("set_bright") == [[100], [1]]
 
 
-def test_set_scene_rejects_out_of_range(driver):
+@pytest.mark.parametrize("bad", [0, 4, 9])
+def test_set_scene_rejects_out_of_range(driver, bad):
+    """Measured: the device accepts 1 to 3 and answers param error (-5001) otherwise."""
     with pytest.raises(ValueError, match="scene must be one of"):
-        driver.set_scene(9)
+        driver.set_scene(bad)
 
 
 @pytest.mark.parametrize("number", sorted(SCENES))
@@ -92,39 +95,54 @@ def test_sleep_timer_never_goes_negative(driver, transport):
     assert transport.sent("delay_off") == [[0]]
 
 
-# ----------------------------------------------------------------- quirk compensation
+# ------------------------------------------------- eyecare and brightness are coupled
 
-def test_eyecare_restores_brightness_the_firmware_moved(driver, transport):
-    """Quirk 1: set_eyecare resets bright. The driver must put it back."""
+def test_enabling_eyecare_does_not_immediately_cancel_it(driver, transport):
+    """Regression: an earlier driver re-applied brightness and switched eyecare off.
+
+    Enabling eyecare made the lamp's base flash the eye symbol and revert instantly to the
+    brightness markers, because the corrective ``set_bright`` cancelled the mode.
+    """
     driver.set_brightness(25)
     driver.set_eyecare(True)
-    assert transport.props["eyecare"] == "on"
-    assert transport.props["bright"] == 25, "brightness should survive enabling eyecare"
+    assert transport.props["eyecare"] == "on", "eyecare must stay on after being enabled"
 
 
-def test_sleep_timer_restores_brightness_the_firmware_moved(driver, transport):
-    """Quirk 2: delay_off resets bright. The driver must put it back."""
+def test_enabling_eyecare_sends_no_brightness_command(driver, transport):
+    """The mode owns brightness; sending one would cancel it."""
     driver.set_brightness(25)
+    transport.calls.clear()
+    driver.set_eyecare(True)
+    assert transport.sent("set_bright") == [], (
+        "no brightness command may follow set_eyecare; it would cancel the mode"
+    )
+
+
+def test_eyecare_takes_control_of_brightness(driver, transport):
+    """Measured on the hardware: the mode ramps to its own level, 25 to 53 to 70."""
+    driver.set_brightness(25)
+    driver.set_eyecare(True)
+    assert transport.props["bright"] == EYECARE_BRIGHTNESS
+    assert driver.state().brightness == EYECARE_BRIGHTNESS
+
+
+def test_setting_brightness_cancels_eyecare(driver, transport):
+    """Device behaviour a client must respect: the two cannot be held together."""
+    driver.set_eyecare(True)
+    assert transport.props["eyecare"] == "on"
+    driver.set_brightness(30)
+    assert transport.props["eyecare"] == "off", "set_bright cancels eyecare on this device"
+    assert transport.props["bright"] == 30
+
+
+def test_sleep_timer_disturbs_nothing_else(driver, transport):
+    """delay_off does not touch brightness, contrary to an earlier misreading."""
+    driver.set_brightness(25)
+    transport.calls.clear()
     driver.set_sleep_timer(30)
     assert transport.props["dvalue"] == 30
-    assert transport.props["bright"] == 25, "brightness should survive a sleep timer"
-
-
-def test_compensation_can_be_disabled_for_protocol_study(transport):
-    lamp = PhilipsEyecareLamp(transport, compensate_quirks=False)
-    lamp.set_brightness(25)
-    lamp.set_eyecare(True)
-    assert transport.props["bright"] == QUIRK_BRIGHTNESS
-
-
-def test_compensation_issues_no_correction_when_firmware_behaves():
-    quiet = FakeTransport(quirks=False)
-    lamp = PhilipsEyecareLamp(quiet)
-    lamp.set_brightness(25)
-    quiet.calls.clear()
-    lamp.set_eyecare(True)
-    # Two reads bracket the call; no corrective write should follow.
-    assert quiet.sent("set_bright") == []
+    assert transport.props["bright"] == 25
+    assert transport.sent("set_bright") == [], "no corrective write should follow delay_off"
 
 
 # --------------------------------------------------------------------- capabilities
@@ -148,5 +166,6 @@ def test_describe_publishes_the_client_contract(driver):
     d = driver.describe()
     assert d["model"] == "philips.light.sread1"
     assert d["brightness_range"] == [1, 100]
-    assert d["scenes"]["1"] == "Study"
+    assert d["scenes"]["1"] == "Scene 1"
+    assert "4" not in d["scenes"], "the device rejects scene 4 with param error"
     assert "eyecare" in d["capabilities"]

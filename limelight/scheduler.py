@@ -18,6 +18,10 @@ twenty-minute sunrise. All device access is serialised inside the transport.
 
 Any manual command arriving through the API cancels a running ramp, on the assumption
 that a person overriding the device by hand means it.
+
+One device interaction is worth knowing: a ramp works by stepping ``set_bright``, and on
+the Philips Eyecare lamp that command cancels eyecare mode. A sunrise or fade therefore
+switches eyecare off. That is inherent to the hardware, which offers no way to hold both.
 """
 
 from __future__ import annotations

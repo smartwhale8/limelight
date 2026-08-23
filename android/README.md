@@ -86,7 +86,7 @@ app/src/main/java/com/smartwhale8/limelight/
     MiioDiscovery.kt           subnet sweep and broadcast
   device/
     Device.kt                  Capability, LampState, LampDriver, DriverRegistry
-    PhilipsEyecareLamp.kt      the concrete driver, including firmware quirks
+    PhilipsEyecareLamp.kt      the concrete driver, including measured behaviour
   data/DeviceStore.kt          remembers the last lamp
   ui/
     LampViewModel.kt           state, polling, commands
@@ -117,9 +117,10 @@ with increasing backoff before failing.
 which never changes, and re-runs discovery to find the lamp again if the stored address
 goes quiet.
 
-**Two firmware defects are compensated for**, in `PhilipsEyecareLamp`: `set_eyecare` and
-`delay_off` each reset brightness as an undocumented side effect, so brightness is read
-first and restored afterwards.
+**Eyecare and brightness are coupled**, and `PhilipsEyecareLamp` deliberately leaves them
+alone. Enabling eyecare hands brightness to the mode, which ramps to its own level, and
+sending a brightness cancels the mode. Re-applying brightness after enabling eyecare, which
+an earlier version did, switches it straight back off.
 
 ## Permissions
 
@@ -143,11 +144,16 @@ See [../SECURITY.md](../SECURITY.md).
 
 ## Not included
 
-Sunrise ramps and recurring schedules are not in this app. They require something to be
-running at the scheduled moment, and Android's background execution limits make a phone a
-poor host for that. They live in the Python service, which can run on any always-on
-machine. A foreground-service implementation is noted in
-[../docs/ROADMAP.md](../docs/ROADMAP.md).
+Sunrise ramps and recurring schedules are not in this app, and there is no alarm,
+schedule or background-service code in it at all. They require something running at the
+scheduled moment, and Android is hostile to a twenty-minute network operation beginning at
+a fixed time on a sleeping phone.
+
+[../docs/ROADMAP.md](../docs/ROADMAP.md#scheduled-wake-up-on-the-phone) sets out exactly
+what building it would require, including the parts that cannot be solved in code, so the
+cost is known before anyone starts.
+
+They live in the Python service meanwhile, which runs unchanged on any always-on machine.
 
 The lamp's own sleep timer **is** included, because the countdown runs on the device and
 survives the phone being away.

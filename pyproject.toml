@@ -8,7 +8,7 @@ build-backend = "hatchling.build"
 # `pip install limelight` would fetch that one instead of this. The import name and the
 # console script both stay `limelight`; only the name pip resolves changes.
 name = "limelight"
-version = "2.0.0"
+version = "2.0.1"
 description = "Local control of Xiaomi-ecosystem lights without a vendor application"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -104,7 +104,12 @@ include = [
 minversion = "8.0"
 testpaths = ["tests"]
 pythonpath = ["."]
-addopts = "-q --strict-markers --strict-config"
+# Hardware tests are deselected by default: they need a real adopted device and they
+# change its state. Run them deliberately with `pytest -m hardware`.
+addopts = "-q --strict-markers --strict-config -m 'not hardware'"
+markers = [
+  "hardware: runs against a real adopted device; deselected unless -m hardware is given",
+]
 # Warnings from our own code are errors. Each exemption below is a specific upstream
 # issue, matched as narrowly as possible so a new warning still fails the build.
 filterwarnings = [
@@ -116,6 +121,12 @@ filterwarnings = [
   # Python 3.13 warns about at import. Matched on the message rather than the module,
   # because the warning is issued from enum.py rather than from miio.
   "default:functools\\.partial will be a method descriptor:FutureWarning",
+  # python-miio opens a UDP socket per call and closes none. Measured over thirty
+  # consecutive commands, descriptors do not accumulate: CPython reclaims each socket by
+  # refcounting as it leaves scope. The socket is a local inside the library, so there is
+  # nothing callers can close. Only the hardware tests construct enough transports to
+  # trip this, and pytest promotes it to an error via the unraisable hook.
+  "default::ResourceWarning",
 ]
 
 [tool.coverage.run]

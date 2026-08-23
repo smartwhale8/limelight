@@ -188,7 +188,7 @@ One `get_prop` call returns everything, in the order requested:
 | `ambstatus` | `"on"` / `"off"` | Ambient light in the base |
 | `ambvalue` | 1–100 | Ambient brightness |
 | `eyecare` | `"on"` / `"off"` | Eyecare mode |
-| `scene_num` | 1–4 | Fixed scene |
+| `scene_num` | 1–3 | Fixed scene; the device rejects 4 |
 | `bls` | `"on"` / `"off"` | Smart night light |
 | `dvalue` | 0–n | Sleep timer, minutes remaining, 0 when unset |
 
@@ -204,12 +204,23 @@ reads with `.get()`, so a short reply yields `None` rather than an exception.
 | Eyecare mode | `set_eyecare` | `["on"]` / `["off"]` | `["ok"]` |
 | Ambient light | `enable_amb` | `["on"]` / `["off"]` | `["ok"]` |
 | Ambient brightness | `set_amb_bright` | `[1..100]` | `["ok"]` |
-| Fixed scene | `set_user_scene` | `[1..4]` | `["ok"]` |
+| Fixed scene | `set_user_scene` | `[1..3]` | `["ok"]` |
 | Sleep timer | `delay_off` | `[minutes]`, 0 cancels | `["ok"]` |
 | Smart night light | `enable_bl` | `["on"]` / `["off"]` | `["ok"]` |
 | Fatigue reminder | `set_notifyuser` | `["on"]` / `["off"]` | `["ok"]` |
 
-Scenes are: 1 Study, 2 Office, 3 Reading, 4 Bedtime.
+### Scenes
+
+The device accepts **1, 2 and 3 only**. Anything else, including 4 and 0, is refused with
+`{"error": {"code": -5001, "message": "param error"}}`.
+
+What a scene does is not visible through the protocol. Setting one changes `scene_num` and
+nothing else: brightness, eyecare, the ambient light and the night light are all unchanged,
+and that holds after a power cycle and with eyecare enabled. Whatever a scene alters is not
+exposed by `get_prop`.
+
+They are therefore reported as "Scene 1", "Scene 2" and "Scene 3" rather than given
+descriptive names, which would be invention.
 
 ### Device methods
 
@@ -236,20 +247,35 @@ A representative `miIO.info` reply, with identifiers replaced:
 }
 ```
 
-## Firmware defects
+## Device behaviour a client must respect
 
-Both were found by measurement and are compensated for in
-`drivers/philips_eyecare.py`.
+### Eyecare mode owns brightness
 
-### Brightness is reset by unrelated commands
+Two coupled behaviours, measured on firmware 1.2.8:
 
-| Command | Effect on `bright` |
+| Action | Effect |
 |---|---|
-| `set_eyecare` | Reset to a stored value. Observed 25 becoming 53. |
-| `delay_off` | Reset to a stored value. Observed 53 becoming 70. |
+| `set_eyecare` `["on"]` | The mode takes brightness to its own level, ramping over about three seconds. Observed 25 rising to 53 after one second and 70 after three. |
+| `set_bright` while eyecare is on | **Cancels eyecare.** `eyecare` becomes `"off"` and the brightness is applied. |
 
-Neither is documented. A user setting a sleep timer has not asked for a brightness change,
-so the driver reads brightness first and restores it afterwards if the firmware moved it.
+There is no way to hold both. A client that sets brightness is implicitly leaving eyecare,
+and one that enables eyecare must not follow it with a brightness command.
+
+The observable symptom of getting this wrong is distinctive: the lamp's base briefly shows
+the eye symbol and then reverts to the brightness markers, because the mode was switched on
+and immediately off again.
+
+`delay_off` disturbs nothing else. Brightness, power and every other property are unchanged
+by it.
+
+> **A correction.** Earlier versions of this document described two firmware defects, in
+> which `set_eyecare` and `delay_off` each "reset" brightness. The measurements were real
+> but the interpretation was wrong. The `delay_off` observation came from issuing that
+> command while the eyecare ramp above was still in progress, so the ramp was credited to
+> the wrong command. Compensation was then built on that reading, and because setting
+> brightness cancels eyecare, the compensation broke the feature it was meant to protect.
+> The lesson is recorded rather than quietly removed: keep the measurement and the
+> interpretation as separate claims.
 
 ### The setup access point advertises no gateway
 
