@@ -53,6 +53,13 @@ becomes `set_bright` in a JSON payload, encrypted with a key derived from a toke
 sent as a UDP datagram. That separation is what makes a second device type a new file
 rather than a rewrite.
 
+Two device generations sit behind that rule. Legacy miIO devices address properties by
+string name through `get_prop`; MIoT-Spec-V2 devices address them numerically through
+`get_properties` with a service and property id. Both use the same framing, encryption,
+handshake and discovery, so the split falls entirely inside the driver: `MiioTransport`
+serves either, and a MIoT device is a driver that issues different payloads. Nothing above
+`drivers/` changes. See [PROTOCOL.md](PROTOCOL.md#what-miio-is).
+
 | Layer | Module | Responsibility | Knows about |
 |---|---|---|---|
 | Transport | `drivers/miio_transport.py` | Bytes on the wire, retry, rediscovery | UDP, AES, tokens |

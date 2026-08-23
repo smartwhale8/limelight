@@ -29,6 +29,39 @@ print(MiioTransport("192.168.1.42", "<token>").info())
 
 The common case. The transport is done; you are describing a command set.
 
+First establish which generation the device belongs to, because it decides how properties
+are addressed. See [PROTOCOL.md](PROTOCOL.md#what-miio-is) for the background.
+
+| | Legacy miIO | MIoT-Spec-V2 |
+|---|---|---|
+| Read | `send("get_prop", ["power", "bright"])` | `send("get_properties", [{"did": "p", "siid": 2, "piid": 1}])` |
+| Write | `send("set_bright", [45])` | `send("set_properties", [{"did": "p", "siid": 2, "piid": 3, "value": 45}])` |
+| Property names | Strings, learned per device | Numeric service and property ids from a published specification |
+
+Probe for it, since a device answers only the form it implements:
+
+```python
+from lamplight.drivers.miio_transport import MiioTransport
+t = MiioTransport("192.168.1.42", "<token>")
+
+try:
+    print("legacy:", t.send("get_prop", ["power"]))
+except Exception as exc:
+    print("legacy unsupported:", exc)
+
+try:
+    print("miot:", t.send("get_properties", [{"did": "p", "siid": 2, "piid": 1}]))
+except Exception as exc:
+    print("miot unsupported:", exc)
+```
+
+Either way the driver is the only thing that changes: `MiioTransport` carries both, and a
+MIoT driver simply issues different payloads from its `state()` and setter methods. For a
+MIoT device, record the `siid` and `piid` pairs as module constants with the same care the
+example below gives to property names.
+
+The rest of this section uses the legacy form, which is what `philips.light.sread1` speaks.
+
 ### 1. Discover the property names
 
 There is no registry, so the practical route is: check whether

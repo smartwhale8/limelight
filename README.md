@@ -75,6 +75,48 @@ Adding another miIO light is a new file in `lamplight/drivers/`. See
 This section explains the mechanism from the network layer up. If you only want to use the
 software, skip to [Install](#install).
 
+### What miIO is
+
+**miIO** is the local control protocol spoken by devices in Xiaomi's smart home ecosystem.
+The name is a contraction of *Mi* and *IO*. It is a proprietary protocol that Xiaomi has
+never published; everything known about it publicly comes from reverse engineering, and
+[python-miio](https://github.com/rytilahti/python-miio) is the reference implementation.
+
+Two things about it are worth understanding before anything else.
+
+**The brand on the box does not determine the protocol.** Xiaomi operates an ecosystem
+programme in which partner manufacturers build hardware that registers with the Mi Home
+application. A device from that programme speaks miIO regardless of whose logo it carries,
+which is why a Philips-branded lamp is addressed by the same protocol as a Xiaomi air
+purifier. Every such device has a model identifier in `vendor.category.model` form:
+
+```
+philips.light.sread1
+   |      |      |
+   |      |      +-- model, this specific product
+   |      +--------- category, a light
+   +---------------- vendor within the ecosystem programme
+```
+
+That identifier, not the brand name, is what selects a driver in this project.
+
+**There are two generations of the protocol**, and they differ in how properties are
+addressed:
+
+| | Legacy miIO | MIoT-Spec-V2 |
+|---|---|---|
+| Reading | `get_prop` with string property names | `get_properties` with numeric `siid` and `piid` |
+| Writing | Device-specific methods such as `set_bright` | `set_properties`, and `action` for commands |
+| Discoverability | None. Property names must be learned per device. | Self-describing, published as a URN specification |
+| Used by | Older devices, including this lamp | Newer devices |
+
+Xiaomi intends MIoT-Spec-V2 to replace the legacy profile. **Both ride the same encrypted
+UDP transport described below**, so the transport layer in this project serves either, and
+only the driver differs. This lamp is a legacy device and uses `get_prop`.
+
+Separately, these devices also talk to Xiaomi's cloud over HTTPS when bound to an account.
+lamplight never uses that path, and never binds an account.
+
 ### Wi-Fi access points, and the two modes a device can be in
 
 An **access point** is the radio that other devices associate with to form a Wi-Fi

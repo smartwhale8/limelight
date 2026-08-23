@@ -7,6 +7,39 @@ firmware 1.2.8, MCU 0026, Wi-Fi 1.4.0.
 to start. This document is the exhaustive version, with byte-level detail and worked
 examples.
 
+## What miIO is
+
+miIO is the local control protocol used by devices in Xiaomi's smart home ecosystem, its
+name a contraction of *Mi* and *IO*. Xiaomi has never published a specification. Public
+knowledge of it comes from reverse engineering, principally
+[python-miio](https://github.com/rytilahti/python-miio) and
+[OpenMiHome](https://github.com/OpenMiHome/mihome-binary-protocol).
+
+Devices reach the protocol through Xiaomi's ecosystem programme rather than through the
+Xiaomi brand: partner manufacturers build hardware that registers with the Mi Home
+application, so the protocol is shared across many badges. Each device carries a model
+identifier of the form `vendor.category.model`, such as `philips.light.sread1`. That string
+is authoritative for capability purposes; the brand name is not.
+
+### Two generations
+
+| | Legacy miIO | MIoT-Spec-V2 |
+|---|---|---|
+| Read | `get_prop`, string property names | `get_properties`, numeric `siid` and `piid` |
+| Write | Device-specific methods, for example `set_bright` | `set_properties`, plus `action` for commands |
+| Introspection | None; names are learned per device | Self-describing, published as a URN specification |
+| Devices | Older, including `philips.light.sread1` | Newer |
+
+Xiaomi intends MIoT-Spec-V2 to supersede the legacy profile. The distinction matters when
+adding a device, but **not** to the transport: framing, encryption, the handshake and
+discovery are identical for both, and everything from [Packet layout](#packet-layout)
+onwards applies either way. Only the payload method names and property addressing differ,
+which in this project is entirely a driver concern. See
+[DEVICES.md](DEVICES.md#case-1-another-miio-device).
+
+A cloud protocol over HTTPS exists alongside this for devices bound to a Xiaomi account.
+lamplight does not use it, and provisions with `uid=0` specifically to avoid binding.
+
 ## Overview
 
 | | |
