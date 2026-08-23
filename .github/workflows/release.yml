@@ -1,16 +1,23 @@
 name: Release
 
-# Publishes a downloadable APK and Python distribution against a version tag.
+# Publishes a downloadable APK and Python distribution against a version tag, and uploads
+# the package to PyPI.
 #
-# CI already builds the APK on every push, but those artifacts expire and require a
-# GitHub login to fetch. A release is permanent, versioned and directly downloadable,
-# which is what makes it a sensible place to keep an installable build. The binary is
-# deliberately not committed to the repository: at roughly 16 MB per build it would grow
-# the history without bound.
+# CI already builds the APK on every push, but those artifacts expire and require a GitHub
+# login to fetch. A release is permanent, versioned and directly downloadable. The binary
+# is deliberately not committed to the repository: at roughly 16 MB per build it would
+# grow the history without bound.
 #
-#   git tag v1.1.0 && git push origin v1.1.0
+#   git tag v2.1.0 && git push origin v2.1.0
 #
-# Or run it by hand from the Actions tab.
+# Or run it by hand from the Actions tab, where `target` chooses PyPI, TestPyPI, or
+# neither. Rehearse on TestPyPI first: **PyPI versions are immutable**, so a version that
+# has been uploaded can never be replaced, and deleting it does not free the number.
+#
+# Authentication uses Trusted Publishing rather than an API token, so no long-lived secret
+# is stored here. PyPI verifies the workflow's OIDC identity against a publisher configured
+# on the project, which must name this repository, this workflow file and the `pypi`
+# environment.
 
 on:
   push:
@@ -21,14 +28,22 @@ on:
       tag:
         description: "Tag to publish, for a manual run"
         required: true
+      target:
+        description: "Where to publish the Python package"
+        required: true
+        default: "none"
+        type: choice
+        options: [none, testpypi, pypi]
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   build:
     name: Build release artifacts
     runs-on: ubuntu-latest
+    permissions:
+      contents: write          # to create the GitHub Release
     steps:
       - uses: actions/checkout@v4
 
@@ -42,8 +57,8 @@ jobs:
           gradle-version: "8.9"
 
       # A debug build, deliberately. A release build needs a signing keystore, and an
-      # unsigned release APK will not install. The debug APK installs by sideloading and
-      # is the right artifact for personal use. See android/README.md if signing is added.
+      # unsigned release APK will not install. The debug APK sideloads and is the right
+      # artifact for personal use.
       - name: Build the Android client
         working-directory: android
         run: gradle --no-daemon assembleDebug
@@ -54,7 +69,6 @@ jobs:
           TAG="${GITHUB_REF_NAME:-${{ github.event.inputs.tag }}}"
           mkdir -p release
           cp android/app/build/outputs/apk/debug/app-debug.apk "release/limelight-${TAG}.apk"
-          ls -lh release/
 
       - uses: actions/setup-python@v5
         with:
@@ -62,8 +76,18 @@ jobs:
 
       - name: Build the Python distribution
         run: |
-          pip install build -c constraints.txt
-          python -m build --outdir release/
+          pip install build twine -c constraints.txt
+          python -m build --outdir dist/
+          twine check dist/*
+          cp dist/*.whl dist/*.tar.gz release/
+
+      # Kept separate from the release assets so the publish job gets only the package.
+      - name: Keep the distribution for the publish job
+        uses: actions/upload-artifact@v4
+        with:
+          name: python-distribution
+          path: dist/
+          if-no-files-found: error
 
       - name: Publish the release
         uses: softprops/action-gh-release@v2
@@ -81,9 +105,51 @@ jobs:
             installation from your browser or file manager the first time. The app finds
             the lamp on your Wi-Fi by itself and needs nothing else running.
 
-            **Python service.** `pip install limelight-*.whl`, then `limelight discover`
-            and `limelight adopt --auto`.
+            **Python service.** `pip install limelight`, then `limelight discover` and
+            `limelight adopt --auto`.
 
             The APK is a debug build, so it is signed with the standard debug key rather
             than a release key. That is fine for sideloading and means it cannot be
             published to Play without resigning.
+
+  publish-testpypi:
+    name: Publish to TestPyPI
+    needs: build
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.target == 'testpypi'
+    runs-on: ubuntu-latest
+    environment:
+      name: testpypi
+      url: https://test.pypi.org/p/limelight
+    permissions:
+      id-token: write          # the only credential; no API token is stored
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: python-distribution
+          path: dist/
+      - uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          repository-url: https://test.pypi.org/legacy/
+          # A rehearsal should not fail merely because the version was rehearsed already.
+          skip-existing: true
+
+  publish-pypi:
+    name: Publish to PyPI
+    needs: build
+    # A tag publishes for real. A manual run only does so when explicitly asked, which
+    # keeps an accidental dispatch from consuming a version number permanently.
+    if: >-
+      github.event_name == 'push' ||
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.target == 'pypi')
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/limelight
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: python-distribution
+          path: dist/
+      - uses: pypa/gh-action-pypi-publish@release/v1

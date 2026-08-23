@@ -35,7 +35,7 @@ every command is a UDP datagram sent from your machine to the device.
 |  | |
 |---|---|
 | **Web interface** | Any browser, including a phone on the same network. Dark and light themes. |
-| **Android app** | Standalone client in [`android/`](android/), talking to the lamp directly over miIO with no server running. Download the APK from [Releases](https://github.com/smartwhale8/limelight/releases). |
+| **Android app** | Standalone client in [`android/`](https://github.com/smartwhale8/limelight/tree/main/android), talking to the lamp directly over miIO with no server running. Download the APK from [Releases](https://github.com/smartwhale8/limelight/releases). |
 | **JSON API** | Versioned at `/api/v1`, with an OpenAPI schema for generating clients. |
 | **Command line** | Every function scriptable, suitable for cron or other automation. |
 | **Sunrise wake-up** | Gradual brightness ramp over any duration. |
@@ -67,14 +67,14 @@ Hardware details for that model:
 | State notification | None. State must be polled. |
 
 Adding another miIO light is a new file in `limelight/drivers/`. See
-[docs/DEVICES.md](docs/DEVICES.md).
+[docs/DEVICES.md](https://github.com/smartwhale8/limelight/blob/main/docs/DEVICES.md).
 
 ---
 
 ## How it works
 
 The concepts, in the order they matter. Byte-level detail lives in
-[docs/PROTOCOL.md](docs/PROTOCOL.md); this is the orientation.
+[docs/PROTOCOL.md](https://github.com/smartwhale8/limelight/blob/main/docs/PROTOCOL.md); this is the orientation.
 
 ### What miIO is
 
@@ -126,7 +126,7 @@ philips-light-sread1_miapXXXX
 Two consequences: your machine loses internet while joined to it, and **this device's setup
 network advertises no default gateway**, so code that derives the device address from the
 routing table finds nothing. It answers on `192.168.4.1`. That detail defeated the first
-adoption attempt and is why [docs/ADOPTION.md](docs/ADOPTION.md) exists.
+adoption attempt and is why [docs/ADOPTION.md](https://github.com/smartwhale8/limelight/blob/main/docs/ADOPTION.md) exists.
 
 ### Addressing: the device id matters more than the IP
 
@@ -184,7 +184,7 @@ Reading everything in one datagram is not a nicety. The device is a single-threa
 microcontroller on a connectionless transport, and one request per property drops datagrams.
 
 The full property list and command surface for this lamp is in
-[docs/PROTOCOL.md](docs/PROTOCOL.md), including one coupling a client must respect:
+[docs/PROTOCOL.md](https://github.com/smartwhale8/limelight/blob/main/docs/PROTOCOL.md), including one coupling a client must respect:
 **enabling eyecare hands brightness to the mode, and setting brightness cancels eyecare.**
 The two cannot be held at once.
 
@@ -235,9 +235,9 @@ sequenceDiagram
 
 The Android app removes the middle two participants: it speaks miIO to the lamp directly.
 
-Further reading: [docs/PROTOCOL.md](docs/PROTOCOL.md) for the wire format,
-[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for how the code is layered, and
-[docs/API.md](docs/API.md) for the HTTP contract.
+Further reading: [docs/PROTOCOL.md](https://github.com/smartwhale8/limelight/blob/main/docs/PROTOCOL.md) for the wire format,
+[docs/ARCHITECTURE.md](https://github.com/smartwhale8/limelight/blob/main/docs/ARCHITECTURE.md) for how the code is layered, and
+[docs/API.md](https://github.com/smartwhale8/limelight/blob/main/docs/API.md) for the HTTP contract.
 
 ## Install
 
@@ -272,7 +272,7 @@ limelight adopt --auto --name "Desk lamp"
 ```
 
 If it reports `token withheld`, or the device is unprovisioned and broadcasting its own
-SoftAP, follow [docs/ADOPTION.md](docs/ADOPTION.md), which covers recovering the token over
+SoftAP, follow [docs/ADOPTION.md](https://github.com/smartwhale8/limelight/blob/main/docs/ADOPTION.md), which covers recovering the token over
 the setup access point and handing the device your Wi-Fi credentials. Then:
 
 ```bash
@@ -332,7 +332,7 @@ not forward the port to the internet; reach it through a VPN into your network i
 
 A separate consideration applies to the device itself: this firmware discloses its token to
 any unauthenticated request on the local network, so the device's real perimeter is your
-Wi-Fi password. See [SECURITY.md](SECURITY.md).
+Wi-Fi password. See [SECURITY.md](https://github.com/smartwhale8/limelight/blob/main/SECURITY.md).
 
 ## Timed behaviour and its one limitation
 
@@ -379,20 +379,20 @@ Each script prints what it will do before doing it, and each has a matching
 
 | Document | Contents |
 |---|---|
-| [docs/PROTOCOL.md](docs/PROTOCOL.md) | miIO on the wire, packet layout, crypto, full command set |
-| [docs/API.md](docs/API.md) | The HTTP contract, with captured responses |
-| [docs/ADOPTION.md](docs/ADOPTION.md) | Token recovery and provisioning, step by step |
-| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Layers, threading, state, and the reasoning |
-| [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) | Setup, testing, debugging, releasing |
-| [docs/DEVICES.md](docs/DEVICES.md) | Adding support for another device |
-| [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) | Symptoms, causes, fixes |
-| [docs/ROADMAP.md](docs/ROADMAP.md) | Planned work |
-| [android/README.md](android/README.md) | The Android client: build, design, and how its codec was verified |
+| [docs/PROTOCOL.md](https://github.com/smartwhale8/limelight/blob/main/docs/PROTOCOL.md) | miIO on the wire, packet layout, crypto, full command set |
+| [docs/API.md](https://github.com/smartwhale8/limelight/blob/main/docs/API.md) | The HTTP contract, with captured responses |
+| [docs/ADOPTION.md](https://github.com/smartwhale8/limelight/blob/main/docs/ADOPTION.md) | Token recovery and provisioning, step by step |
+| [docs/ARCHITECTURE.md](https://github.com/smartwhale8/limelight/blob/main/docs/ARCHITECTURE.md) | Layers, threading, state, and the reasoning |
+| [docs/DEVELOPMENT.md](https://github.com/smartwhale8/limelight/blob/main/docs/DEVELOPMENT.md) | Setup, testing, debugging, releasing |
+| [docs/DEVICES.md](https://github.com/smartwhale8/limelight/blob/main/docs/DEVICES.md) | Adding support for another device |
+| [docs/TROUBLESHOOTING.md](https://github.com/smartwhale8/limelight/blob/main/docs/TROUBLESHOOTING.md) | Symptoms, causes, fixes |
+| [docs/ROADMAP.md](https://github.com/smartwhale8/limelight/blob/main/docs/ROADMAP.md) | Planned work |
+| [android/README.md](https://github.com/smartwhale8/limelight/blob/main/android/README.md) | The Android client: build, design, and how its codec was verified |
 
 ## Contributing
 
 Issues and pull requests are welcome, particularly drivers for other miIO lights. See
-[CONTRIBUTING.md](CONTRIBUTING.md). The test suite runs without hardware, so a contribution
+[CONTRIBUTING.md](https://github.com/smartwhale8/limelight/blob/main/CONTRIBUTING.md). The test suite runs without hardware, so a contribution
 can be verified before it touches a device.
 
 ## Acknowledgements
@@ -402,7 +402,7 @@ transport and cryptography.
 
 ## License
 
-[MIT](LICENSE).
+[MIT](https://github.com/smartwhale8/limelight/blob/main/LICENSE).
 
 limelight is not affiliated with, endorsed by, or connected to Xiaomi, Signify, or Philips.
 Product names identify the hardware the software controls.

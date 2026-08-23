@@ -12,7 +12,8 @@ version = "2.0.1"
 description = "Local control of Xiaomi-ecosystem lights without a vendor application"
 readme = "README.md"
 requires-python = ">=3.11"
-license = { file = "LICENSE" }
+license = "MIT"
+license-files = ["LICENSE"]
 authors = [{ name = "smartwhale8" }]
 keywords = ["miio", "xiaomi", "philips", "iot", "home-automation", "smart-lighting"]
 classifiers = [
@@ -21,7 +22,6 @@ classifiers = [
   "Framework :: FastAPI",
   "Intended Audience :: End Users/Desktop",
   "Intended Audience :: Developers",
-  "License :: OSI Approved :: MIT License",
   "Operating System :: OS Independent",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",

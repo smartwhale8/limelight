@@ -8,6 +8,20 @@ contract in [docs/API.md](docs/API.md) is what the major version protects.
 
 ## [Unreleased]
 
+### Added
+
+- Publishing to PyPI from the release workflow, authenticated with Trusted Publishing
+  rather than an API token, so no long-lived secret is stored in the repository. A manual
+  run can target TestPyPI instead, which matters because PyPI versions are immutable and a
+  number cannot be reused once uploaded.
+
+### Fixed
+
+- Every link in the README is now absolute. PyPI resolves relative links against
+  `pypi.org`, so all 21 of them would have 404'd on the package page.
+- The licence is declared as the SPDX expression `MIT` rather than a file reference, so
+  PyPI shows a licence chip instead of printing the entire MIT text in the sidebar.
+
 ### Removed
 
 - `run.sh`. It duplicated `limelight serve`, which the package already installs, and was a

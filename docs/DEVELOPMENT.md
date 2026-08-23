@@ -447,7 +447,24 @@ Versions follow [semantic versioning](https://semver.org/). The API contract in
 6. `python -m build` if publishing a distribution.
 
 Pushing a `v*` tag triggers `.github/workflows/release.yml`, which builds the Android APK
-and the Python distribution and attaches both to a GitHub Release. The APK is deliberately
+and the Python distribution, attaches both to a GitHub Release, and publishes the package
+to PyPI.
+
+### Publishing
+
+Authentication is Trusted Publishing, so there is no API token anywhere in the repository.
+PyPI verifies the workflow's OIDC identity against a publisher configured on the project,
+naming this repository, `release.yml` and the `pypi` environment.
+
+**PyPI versions are immutable.** A version that has been uploaded can never be replaced,
+and deleting it does not free the number. Rehearse first:
+
+```
+Actions -> Release -> Run workflow -> tag: v2.1.0, target: testpypi
+```
+
+That publishes to TestPyPI, which is a separate instance with its own account and its own
+publisher configuration. Once the page looks right there, tag for real. The APK is deliberately
 not committed to the repository: at roughly 16 MB per build it would grow the history
 without bound.
 
