@@ -29,13 +29,13 @@
 - [ ] Documentation updated where user-visible: [API.md](../docs/API.md) for endpoints, [PROTOCOL.md](../docs/PROTOCOL.md) for device commands, the README table for a new device
 - [ ] `CHANGELOG.md` entry added under `Unreleased`
 - [ ] No token, MAC address, network name, or personal IP address anywhere in the diff
-- [ ] Layering respected: nothing above `lamplight/drivers/` names a device, a miIO command, or a model string
+- [ ] Layering respected: nothing above `limelight/drivers/` names a device, a miIO command, or a model string
 
 ## For a new device driver
 
 - [ ] Model identifier and display name declared
 - [ ] Capability set matches what the hardware actually does, with nothing overclaimed
-- [ ] Registered via `@register` and imported in `lamplight/drivers/__init__.py`
+- [ ] Registered via `@register` and imported in `limelight/drivers/__init__.py`
 - [ ] Command surface documented in the module docstring
 - [ ] Any firmware defect found is documented with the values observed
 - [ ] Added to the supported devices table in the README

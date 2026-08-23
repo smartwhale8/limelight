@@ -16,8 +16,8 @@ import time
 
 import pytest
 
-from lamplight.drivers import miio_transport as mt
-from lamplight.drivers.base import DeviceUnreachable
+from limelight.drivers import miio_transport as mt
+from limelight.drivers.base import DeviceUnreachable
 
 EXAMPLE_TOKEN = bytes.fromhex("00112233445566778899aabbccddeeff")
 WITHHELD = b"\xff" * 16

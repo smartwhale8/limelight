@@ -2,9 +2,9 @@
 <!-- Android 12 and later. The device token is excluded from both backup and transfer. -->
 <data-extraction-rules>
     <cloud-backup>
-        <exclude domain="sharedpref" path="lamplight.xml" />
+        <exclude domain="sharedpref" path="limelight.xml" />
     </cloud-backup>
     <device-transfer>
-        <exclude domain="sharedpref" path="lamplight.xml" />
+        <exclude domain="sharedpref" path="limelight.xml" />
     </device-transfer>
 </data-extraction-rules>

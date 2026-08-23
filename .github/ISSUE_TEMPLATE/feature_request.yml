@@ -5,7 +5,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        Please check [docs/ROADMAP.md](https://github.com/smartwhale8/lamplight/blob/main/docs/ROADMAP.md)
+        Please check [docs/ROADMAP.md](https://github.com/smartwhale8/limelight/blob/main/docs/ROADMAP.md)
         first. It lists planned work and, in the final section, things that are explicitly
         not planned along with the reasoning.
 

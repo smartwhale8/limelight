@@ -37,7 +37,7 @@ officially representing the project in public.
 ## Enforcement
 
 Report unacceptable behaviour to the maintainer through
-[a private security advisory](https://github.com/smartwhale8/lamplight/security/advisories/new),
+[a private security advisory](https://github.com/smartwhale8/limelight/security/advisories/new),
 which is the private channel available on this repository. All complaints will be reviewed
 and investigated promptly and fairly, and the privacy and security of the reporter will be
 respected.

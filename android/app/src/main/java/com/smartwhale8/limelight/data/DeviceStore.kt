@@ -1,4 +1,4 @@
-package com.smartwhale8.lamplight.data
+package com.smartwhale8.limelight.data
 
 import android.content.Context
 
@@ -17,7 +17,7 @@ import android.content.Context
 class DeviceStore(context: Context) {
 
     private val prefs = context.applicationContext
-        .getSharedPreferences("lamplight", Context.MODE_PRIVATE)
+        .getSharedPreferences("limelight", Context.MODE_PRIVATE)
 
     /** A lamp the user has connected to before. */
     data class Saved(

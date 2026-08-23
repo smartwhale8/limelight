@@ -8,7 +8,7 @@ The consequence is important enough to state plainly, and it is repeated in the 
 and surfaced in the API response for every schedule: a ``sunrise`` or ``fade_off`` ramp
 progresses **only while this process runs**. If the host sleeps, the ramp stops where it
 stood. A ``timer`` schedule uses the device's own countdown and therefore survives the
-service exiting. :attr:`lamplight.config.Schedule.service_driven` reports which is which.
+service exiting. :attr:`limelight.config.Schedule.service_driven` reports which is which.
 
 Threading model
 ---------------

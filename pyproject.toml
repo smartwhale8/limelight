@@ -3,8 +3,12 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "lamplight"
-version = "1.1.1"
+# Distribution name, which is what `pip install` takes. It differs from the import name
+# on purpose: `limelight` is already taken on PyPI by an unrelated package, so
+# `pip install limelight` would fetch that one instead of this. The import name and the
+# console script both stay `limelight`; only the name pip resolves changes.
+name = "limelight"
+version = "2.0.0"
 description = "Local control of Xiaomi-ecosystem lights without a vendor application"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -45,7 +49,9 @@ server = [
   "uvicorn[standard]>=0.27",
 ]
 dev = [
-  "lamplight[server]",
+  # Self-reference by DISTRIBUTION name, not import name. Getting this wrong would make
+  # `pip install -e ".[dev]"` pull the unrelated `limelight` package from PyPI.
+  "limelight[server]",
   "pytest>=8.0",
   "pytest-cov>=5.0",
   # starlette's TestClient needs an HTTP client. Recent versions require httpx2 and
@@ -58,18 +64,18 @@ dev = [
 ]
 
 [project.scripts]
-lamplight = "lamplight.cli:main"
-lamplight-server = "lamplight.server:main"
+limelight = "limelight.cli:main"
+limelight-server = "limelight.server:main"
 
 [project.urls]
-Homepage = "https://github.com/smartwhale8/lamplight"
-Repository = "https://github.com/smartwhale8/lamplight"
-Issues = "https://github.com/smartwhale8/lamplight/issues"
-Documentation = "https://github.com/smartwhale8/lamplight/tree/main/docs"
-Changelog = "https://github.com/smartwhale8/lamplight/blob/main/CHANGELOG.md"
+Homepage = "https://github.com/smartwhale8/limelight"
+Repository = "https://github.com/smartwhale8/limelight"
+Issues = "https://github.com/smartwhale8/limelight/issues"
+Documentation = "https://github.com/smartwhale8/limelight/tree/main/docs"
+Changelog = "https://github.com/smartwhale8/limelight/blob/main/CHANGELOG.md"
 
 [tool.hatch.build.targets.wheel]
-packages = ["lamplight"]
+packages = ["limelight"]
 
 # An explicit include list rather than exclusions, so the contents do not depend on what
 # happens to be on disk. The release workflow builds the Android APK before packing the
@@ -77,7 +83,7 @@ packages = ["lamplight"]
 # being swept in: v1.1.0 shipped a 16 MB source distribution.
 [tool.hatch.build.targets.sdist]
 include = [
-  "/lamplight",
+  "/limelight",
   "/tests",
   "/tools",
   "/docs",
@@ -113,8 +119,8 @@ filterwarnings = [
 ]
 
 [tool.coverage.run]
-source = ["lamplight"]
-omit = ["lamplight/web.py"]        # a template string, not logic
+source = ["limelight"]
+omit = ["limelight/web.py"]        # a template string, not logic
 
 [tool.coverage.report]
 exclude_lines = ["pragma: no cover", "if __name__ == .__main__.:", "raise NotImplementedError"]
@@ -124,7 +130,7 @@ exclude_lines = ["pragma: no cover", "if __name__ == .__main__.:", "raise NotImp
 [tool.ruff]
 line-length = 100
 target-version = "py311"
-exclude = ["lamplight/web.py"]     # a large embedded HTML/JS string
+exclude = ["limelight/web.py"]     # a large embedded HTML/JS string
 
 [tool.ruff.lint]
 select = [

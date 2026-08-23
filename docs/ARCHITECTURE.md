@@ -1,6 +1,6 @@
 # Architecture
 
-How lamplight is put together, and the reasoning behind each boundary. Read this before
+How limelight is put together, and the reasoning behind each boundary. Read this before
 changing anything structural.
 
 ## The shape of it
@@ -16,7 +16,7 @@ flowchart TB
     subgraph service["Service"]
         server["HTTP API<br/><small>server.py · /api/v1</small>"]
         sched["Scheduler<br/><small>scheduler.py · ramps and timetable</small>"]
-        conf["Configuration<br/><small>config.py · ~/.config/lamplight</small>"]
+        conf["Configuration<br/><small>config.py · ~/.config/limelight</small>"]
     end
 
     subgraph devicelayer["Device layer"]
@@ -93,7 +93,7 @@ pipeline.
 ### The service is built by a factory
 
 `server.py` exposes `create_app(config, driver, scheduler)`. The module-level `app` that
-`uvicorn lamplight.server:app` resolves is built lazily through a module `__getattr__`, so
+`uvicorn limelight.server:app` resolves is built lazily through a module `__getattr__`, so
 importing the module contacts nothing.
 
 Constructing the driver at module scope makes the HTTP layer untestable, because importing
@@ -125,7 +125,7 @@ Route handlers are deliberately synchronous. The driver beneath them blocks on U
 
 | State | Location | Notes |
 |---|---|---|
-| Device address, token, model | `~/.config/lamplight/config.json` | Mode `0600`. Contains a credential. |
+| Device address, token, model | `~/.config/limelight/config.json` | Mode `0600`. Contains a credential. |
 | Schedules | Same file | Written atomically through a temporary file and a rename |
 | Ramp in progress | Memory | Deliberately not persisted; see below |
 | Device state | The device | Never cached, always read live |

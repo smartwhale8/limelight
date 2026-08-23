@@ -1,6 +1,6 @@
 """A fake miIO device, so the suite runs with no hardware and no network.
 
-:class:`FakeTransport` implements :class:`~lamplight.drivers.base.Transport` against an
+:class:`FakeTransport` implements :class:`~limelight.drivers.base.Transport` against an
 in-memory property dictionary. It reproduces the two firmware defects the real lamp has,
 because a fake that behaves better than the hardware would let the compensation code rot
 undetected:
@@ -16,7 +16,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from lamplight.drivers.base import DeviceUnreachable, Transport
+from limelight.drivers.base import DeviceUnreachable, Transport
 
 #: The value the real firmware snaps brightness to after a quirk-prone command.
 QUIRK_BRIGHTNESS = 70
@@ -44,7 +44,7 @@ DEFAULT_INFO = {
 
 
 class FakeTransport(Transport):
-    """An in-memory stand-in for :class:`~lamplight.drivers.miio_transport.MiioTransport`."""
+    """An in-memory stand-in for :class:`~limelight.drivers.miio_transport.MiioTransport`."""
 
     def __init__(self, props: dict | None = None, ip: str = "192.168.1.50",
                  fail_after: int | None = None, quirks: bool = True):

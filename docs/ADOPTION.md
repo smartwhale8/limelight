@@ -11,8 +11,8 @@ Firmware that has never been bound to a vendor account answers an unauthenticate
 handshake with its token in plaintext. If that is your case, adoption takes one command:
 
 ```bash
-lamplight discover --subnet 192.168.1.
-lamplight adopt --auto --name "Desk lamp"
+limelight discover --subnet 192.168.1.
+limelight adopt --auto --name "Desk lamp"
 ```
 
 `discover` reports which devices disclose a token:
@@ -93,8 +93,8 @@ else, records the device's self-description, and if given a password sends
 **5. Adopt it.**
 
 ```bash
-lamplight discover --subnet 192.168.1.
-lamplight adopt --ip <address> --token <token from the tool>
+limelight discover --subnet 192.168.1.
+limelight adopt --ip <address> --token <token from the tool>
 ```
 
 ### Doing it by hand
@@ -119,7 +119,7 @@ print("token:", token.hex() if token != b"\xff" * 16 else "withheld")
 Then hand over your Wi-Fi credentials:
 
 ```python
-from lamplight.drivers.miio_transport import MiioTransport
+from limelight.drivers.miio_transport import MiioTransport
 
 t = MiioTransport("192.168.4.1", token.hex())
 print(t.configure_wifi("YourNetwork", "your-password", uid=0))
@@ -203,7 +203,7 @@ nmcli device wifi connect "philips-light-sread1_miapXXXX"
 
 ## Where the token ends up
 
-`~/.config/lamplight/config.json`, mode `0600`.
+`~/.config/limelight/config.json`, mode `0600`.
 
 That file is the only thing standing between the network and your device. It is outside
 the repository, and `.gitignore` blocks the obvious filenames in case a copy strays in.

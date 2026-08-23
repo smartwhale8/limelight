@@ -12,7 +12,7 @@ import stat
 
 import pytest
 
-from lamplight.config import (
+from limelight.config import (
     Config,
     DeviceConfig,
     Schedule,
@@ -136,7 +136,7 @@ def test_environment_key_overrides_the_stored_one(monkeypatch):
     cfg = Config()
     cfg.server.api_key = "from-file"
     cfg.save()
-    monkeypatch.setenv("LAMPLIGHT_API_KEY", "from-environment")
+    monkeypatch.setenv("LIMELIGHT_API_KEY", "from-environment")
     assert Config.load().server.api_key == "from-environment"
 
 
@@ -197,3 +197,72 @@ def test_token_is_never_written_outside_the_config_directory(tmp_path):
     payload = json.loads(config_file().read_text())
     assert payload["device"]["token"] == "d" * 32
     assert config_file().is_relative_to(tmp_path)
+
+
+# ------------------------------------------------------ migration from the old name
+
+def test_legacy_config_is_migrated(tmp_path, monkeypatch):
+    """A pre-rename configuration is picked up, so an existing setup keeps working.
+
+    The project was called lamplight until 2.0.0. Without this, an existing installation
+    would look unconfigured and ask the user to adopt a device they had already adopted,
+    which is worse than an error because the token is not trivial to recover twice.
+    """
+    import limelight.config as cfgmod
+
+    fake_home = tmp_path / "home"
+    legacy = fake_home / ".config" / "lamplight"
+    legacy.mkdir(parents=True)
+    (legacy / "config.json").write_text(
+        json.dumps({"device": {"ip": "192.168.1.42", "token": "a" * 32, "device_id": 7}})
+    )
+
+    monkeypatch.delenv("LIMELIGHT_CONFIG", raising=False)
+    monkeypatch.delenv("LAMPLIGHT_CONFIG", raising=False)
+    monkeypatch.setattr(cfgmod.Path, "home", staticmethod(lambda: fake_home))
+    monkeypatch.setattr(cfgmod, "LEGACY_CONFIG_DIR", legacy)
+
+    cfg = cfgmod.Config.load()
+    assert cfg.device.token == "a" * 32, "the token must survive the rename"
+    assert cfg.device.device_id == 7
+
+
+def test_migration_preserves_restrictive_permissions(tmp_path, monkeypatch):
+    """The migrated file must not become world-readable; it holds a credential."""
+    import limelight.config as cfgmod
+
+    fake_home = tmp_path / "home"
+    legacy = fake_home / ".config" / "lamplight"
+    legacy.mkdir(parents=True)
+    (legacy / "config.json").write_text(json.dumps({"device": {"token": "b" * 32}}))
+    (legacy / "config.json").chmod(0o644)          # deliberately loose to start with
+
+    monkeypatch.delenv("LIMELIGHT_CONFIG", raising=False)
+    monkeypatch.delenv("LAMPLIGHT_CONFIG", raising=False)
+    monkeypatch.setattr(cfgmod.Path, "home", staticmethod(lambda: fake_home))
+    monkeypatch.setattr(cfgmod, "LEGACY_CONFIG_DIR", legacy)
+
+    cfgmod.Config.load()
+    migrated = fake_home / ".config" / "limelight" / "config.json"
+    mode = migrated.stat().st_mode
+    assert not mode & stat.S_IRGRP
+    assert not mode & stat.S_IROTH
+
+
+def test_migration_does_not_run_when_an_override_is_set(tmp_path, monkeypatch):
+    """An explicit LIMELIGHT_CONFIG is authoritative and must not be overwritten."""
+    import limelight.config as cfgmod
+
+    fake_home = tmp_path / "home"
+    legacy = fake_home / ".config" / "lamplight"
+    legacy.mkdir(parents=True)
+    (legacy / "config.json").write_text(json.dumps({"device": {"token": "c" * 32}}))
+
+    override = tmp_path / "elsewhere"
+    monkeypatch.setenv("LIMELIGHT_CONFIG", str(override))
+    monkeypatch.setattr(cfgmod.Path, "home", staticmethod(lambda: fake_home))
+    monkeypatch.setattr(cfgmod, "LEGACY_CONFIG_DIR", legacy)
+
+    cfg = cfgmod.Config.load()
+    assert cfg.device.token == "", "the override directory is empty, so nothing is loaded"
+    assert not (fake_home / ".config" / "limelight").exists()

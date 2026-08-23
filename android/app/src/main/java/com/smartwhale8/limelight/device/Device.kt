@@ -1,13 +1,13 @@
-package com.smartwhale8.lamplight.device
+package com.smartwhale8.limelight.device
 
-import com.smartwhale8.lamplight.miio.MiioClient
+import com.smartwhale8.limelight.miio.MiioClient
 
 /**
  * A feature a lamp may support.
  *
  * The interface renders controls from a driver's capability set rather than assuming what
  * a device can do, so a second model needs no change to the screens. The string values
- * match those published by the lamplight HTTP service, so the two stay comparable.
+ * match those published by the limelight HTTP service, so the two stay comparable.
  */
 enum class Capability(val id: String) {
     POWER("power"),
@@ -40,7 +40,7 @@ data class LampState(
 )
 
 /**
- * The operations lamplight expects of a lamp.
+ * The operations limelight expects of a lamp.
  *
  * A driver declares its model, a display name and a capability set, then implements only
  * what that set claims. Anything else throws [UnsupportedOperationException], which the

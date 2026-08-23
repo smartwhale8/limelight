@@ -5,12 +5,12 @@ Symptoms, causes, and fixes. Start with the first section, which resolves most c
 ## First checks
 
 ```bash
-lamplight status                 # can we reach the device at all?
-lamplight discover              # is it on the network, and where?
-lamplight info                  # what does it say about itself?
+limelight status                 # can we reach the device at all?
+limelight discover              # is it on the network, and where?
+limelight info                  # what does it say about itself?
 ```
 
-`lamplight discover` is the single most useful command. It needs no token, so it separates
+`limelight discover` is the single most useful command. It needs no token, so it separates
 "the device is unreachable" from "the credential is wrong".
 
 ---
@@ -23,10 +23,10 @@ The transport retried, attempted rediscovery, and gave up.
 
 | Cause | Check | Fix |
 |---|---|---|
-| The address changed | `lamplight discover` | It updates the stored address automatically |
+| The address changed | `limelight discover` | It updates the stored address automatically |
 | The device is powered off | Is the lamp lit or responsive to touch? | Power it on |
 | The device dropped off Wi-Fi | Does `discover` find nothing at all? | Power-cycle it; if it does not return, re-provision |
-| Wrong subnet configured | `lamplight capabilities` shows the address | `lamplight adopt --subnet 192.168.1.` |
+| Wrong subnet configured | `limelight capabilities` shows the address | `limelight adopt --subnet 192.168.1.` |
 | Client and device on different subnets | Compare your address with the device's | Guest networks and VLANs block this; use the same subnet |
 | Wrong token | `discover` finds it but commands fail | Re-adopt with the correct token |
 
@@ -48,12 +48,12 @@ out, suspect the token before the network.
 ### Rediscovery warnings in the log
 
 ```
-WARNING lamplight.drivers.miio_transport: device unreachable at 192.168.1.42, rediscovering
+WARNING limelight.drivers.miio_transport: device unreachable at 192.168.1.42, rediscovering
 ```
 
 This is normal in moderation. UDP has no delivery guarantee, so an occasional lost datagram
 triggers a retry and a rediscovery, and the command then succeeds. Continuous warnings
-indicate weak signal or genuine instability; check the `rssi` field in `lamplight info`.
+indicate weak signal or genuine instability; check the `rssi` field in `limelight info`.
 
 ---
 
@@ -110,8 +110,8 @@ directly.
 
 ### `No device configured`
 
-Nothing has been adopted yet. Run `lamplight adopt`. If you have adopted a device, check
-that `LAMPLIGHT_CONFIG` is not pointing somewhere unexpected.
+Nothing has been adopted yet. Run `limelight adopt`. If you have adopted a device, check
+that `LIMELIGHT_CONFIG` is not pointing somewhere unexpected.
 
 ### `Address already in use`
 
@@ -119,7 +119,7 @@ Another process holds the port.
 
 ```bash
 lsof -i :8765            # find it
-lamplight serve --port 9000
+limelight serve --port 9000
 ```
 
 If a `launchd` or `systemd` unit is installed, it is probably already running the service.
@@ -146,10 +146,10 @@ without needing a key. Then send `Authorization: Bearer <key>`. In the browser, 
 stored key and let the page prompt again:
 
 ```javascript
-localStorage.removeItem("lamplight_key"); location.reload();
+localStorage.removeItem("limelight_key"); location.reload();
 ```
 
-Note that `LAMPLIGHT_API_KEY` in the environment overrides the value in the configuration
+Note that `LIMELIGHT_API_KEY` in the environment overrides the value in the configuration
 file.
 
 ---
@@ -169,10 +169,10 @@ constructed with `compensate_quirks=False`.
 
 In order of likelihood:
 
-1. **The service was not running.** `sunrise` and `fade_off` are driven by lamplight, not
+1. **The service was not running.** `sunrise` and `fade_off` are driven by limelight, not
    the device. If the process was not running at the scheduled minute, nothing happened.
 2. **The host was asleep.** Same consequence. A sleeping machine sends no datagrams.
-3. **The schedule is disabled.** `lamplight schedules` shows `[on ]` or `[off]`.
+3. **The schedule is disabled.** `limelight schedules` shows `[on ]` or `[off]`.
 4. **Wrong weekday numbering.** Monday is 0 and Sunday is 6.
 5. **The service started after the scheduled minute.** Schedules are evaluated live and are
    not replayed.
@@ -227,9 +227,9 @@ loginctl enable-linger "$USER"
 ## Getting diagnostics
 
 ```bash
-lamplight serve --log-level debug
-lamplight status --json --raw          # decoded state plus the raw device reply
-lamplight info                         # firmware, MAC, signal strength
+limelight serve --log-level debug
+limelight status --json --raw          # decoded state plus the raw device reply
+limelight info                         # firmware, MAC, signal strength
 ```
 
 Watch the wire, noting that payloads are encrypted but sizes and timing are visible:
@@ -240,9 +240,9 @@ sudo tcpdump -i any -n 'udp port 54321'
 
 ### Reporting a problem
 
-Include the output of `lamplight --version`, your Python version and platform, the firmware
-and model from `lamplight info`, what you expected, what happened, and any log lines at
+Include the output of `limelight --version`, your Python version and platform, the firmware
+and model from `limelight info`, what you expected, what happened, and any log lines at
 `--log-level debug`.
 
-**Redact before posting.** `lamplight info` includes the token on some firmware, and the
+**Redact before posting.** `limelight info` includes the token on some firmware, and the
 raw reply may include your network name. Replace them with `<token>` and `<ssid>`.

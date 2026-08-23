@@ -20,5 +20,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "Lamplight"
+rootProject.name = "Limelight"
 include(":app")

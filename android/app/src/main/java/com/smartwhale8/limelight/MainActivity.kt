@@ -1,4 +1,4 @@
-package com.smartwhale8.lamplight
+package com.smartwhale8.limelight
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -13,10 +13,10 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.smartwhale8.lamplight.ui.ControlScreen
-import com.smartwhale8.lamplight.ui.DiscoveryScreen
-import com.smartwhale8.lamplight.ui.LampViewModel
-import com.smartwhale8.lamplight.ui.theme.LamplightTheme
+import com.smartwhale8.limelight.ui.ControlScreen
+import com.smartwhale8.limelight.ui.DiscoveryScreen
+import com.smartwhale8.limelight.ui.LampViewModel
+import com.smartwhale8.limelight.ui.theme.LimelightTheme
 
 /**
  * The only activity.
@@ -33,12 +33,12 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            LamplightTheme {
+            LimelightTheme {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background,
                 ) {
-                    LamplightApp(onViewModel = { viewModelRef = it })
+                    LimelightApp(onViewModel = { viewModelRef = it })
                 }
             }
         }
@@ -58,7 +58,7 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-private fun LamplightApp(onViewModel: (LampViewModel) -> Unit) {
+private fun LimelightApp(onViewModel: (LampViewModel) -> Unit) {
     val vm: LampViewModel = viewModel()
     onViewModel(vm)
     val state by vm.state.collectAsState()

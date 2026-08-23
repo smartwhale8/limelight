@@ -1,4 +1,4 @@
-package com.smartwhale8.lamplight.miio
+package com.smartwhale8.limelight.miio
 
 import android.content.Context
 import android.net.ConnectivityManager
@@ -81,7 +81,7 @@ class MiioDiscovery(private val context: Context) {
             // and holding one during a short scan is harmless.
             val wifi = context.applicationContext
                 .getSystemService(Context.WIFI_SERVICE) as? WifiManager
-            val lock = wifi?.createMulticastLock("lamplight-discovery")?.apply {
+            val lock = wifi?.createMulticastLock("limelight-discovery")?.apply {
                 setReferenceCounted(true)
                 runCatching { acquire() }
             }

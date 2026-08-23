@@ -1,6 +1,6 @@
-package com.smartwhale8.lamplight.device
+package com.smartwhale8.limelight.device
 
-import com.smartwhale8.lamplight.miio.MiioClient
+import com.smartwhale8.limelight.miio.MiioClient
 import kotlinx.coroutines.delay
 
 /**

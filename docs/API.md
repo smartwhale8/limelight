@@ -26,7 +26,7 @@ and will be removed in 2.0. **Native clients must use `/api/v1`.**
 
 ## Authentication
 
-Off when no key is configured. When `LAMPLIGHT_API_KEY` or `server.api_key` is set, every
+Off when no key is configured. When `LIMELIGHT_API_KEY` or `server.api_key` is set, every
 endpoint except `/api/v1/health` requires one of:
 
 ```http
@@ -83,7 +83,7 @@ Liveness and identity. No authentication.
 ```json
 {
   "ok": true,
-  "service": "lamplight",
+  "service": "limelight",
   "version": "1.0.0",
   "device_name": "Desk lamp",
   "model": "philips.light.sread1",
@@ -91,7 +91,7 @@ Liveness and identity. No authentication.
 }
 ```
 
-Use `service == "lamplight"` to confirm what you have found when scanning a network.
+Use `service == "limelight"` to confirm what you have found when scanning a network.
 
 ### `GET /api/v1/device`
 
@@ -196,7 +196,7 @@ Calling one whose capability the device lacks returns `400`.
 that a person adjusting the device by hand overrides an automatic sequence. The other
 endpoints do not.
 
-`sleep_timer` sets the **device's own** countdown. It keeps running if lamplight stops.
+`sleep_timer` sets the **device's own** countdown. It keeps running if limelight stops.
 `0` cancels it.
 
 ### `POST /api/v1/sunrise`
@@ -336,7 +336,7 @@ everything.
 
 **Finding the service.** There is no mDNS advertisement yet; it is on the
 [roadmap](ROADMAP.md). For now, let the user enter a host, then confirm it with
-`GET /api/v1/health` and check `service == "lamplight"`.
+`GET /api/v1/health` and check `service == "limelight"`.
 
 **Pairing.** Read `auth_required` from `/health`. If true, collect a key, store it in
 `EncryptedSharedPreferences`, and send it as a bearer token. Never write it to logs.
@@ -384,5 +384,5 @@ curl -s -X POST $HOST/api/v1/schedules -H 'Content-Type: application/json' -d '{
   "days":[0,1,2,3,4],"duration_min":25,"target_brightness":100,"ambient":true}' | jq .
 
 # With authentication enabled
-curl -s -H "Authorization: Bearer $LAMPLIGHT_API_KEY" $HOST/api/v1/state | jq .
+curl -s -H "Authorization: Bearer $LIMELIGHT_API_KEY" $HOST/api/v1/state | jq .
 ```

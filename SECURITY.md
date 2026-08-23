@@ -3,7 +3,7 @@
 ## Reporting a vulnerability
 
 Report privately through
-[GitHub Security Advisories](https://github.com/smartwhale8/lamplight/security/advisories/new)
+[GitHub Security Advisories](https://github.com/smartwhale8/limelight/security/advisories/new)
 rather than as a public issue. Include what an attacker gains, how to reproduce it, and any
 affected versions.
 
@@ -14,7 +14,7 @@ within a couple of weeks.
 
 ## The threat model
 
-lamplight controls lighting on a local network. Understanding what is and is not protected
+limelight controls lighting on a local network. Understanding what is and is not protected
 matters more here than in most projects, because two of the weaknesses are in the hardware
 and cannot be fixed in software.
 
@@ -29,7 +29,7 @@ and the device being one more foothold on your network.
 A miIO device is protected by a single 16-byte token. There is no user, no password, and no
 per-command authorisation. **Whoever holds the token controls the device completely.**
 
-lamplight stores it in `~/.config/lamplight/config.json` at mode `0600`, written atomically
+limelight stores it in `~/.config/limelight/config.json` at mode `0600`, written atomically
 so a partial write cannot leave it readable. The token is never returned by any API
 endpoint, and `POST /api/v1/discover` strips it from discovery results.
 
@@ -60,7 +60,7 @@ effectiveness:
 - **Use WPA2 or WPA3 on your network, with a strong passphrase.** This is the actual
   control.
 - **Put the device on an IoT VLAN or a separate SSID**, reachable from the machine running
-  lamplight and nothing else, if your router supports it.
+  limelight and nothing else, if your router supports it.
 - **Do not put it on a network shared with guests.** A guest with the Wi-Fi password can
   take the device.
 
@@ -87,8 +87,8 @@ reach the port can control the device.
 To require a key:
 
 ```bash
-export LAMPLIGHT_API_KEY="$(openssl rand -hex 24)"
-lamplight serve
+export LIMELIGHT_API_KEY="$(openssl rand -hex 24)"
+limelight serve
 ```
 
 Clients then send `Authorization: Bearer <key>` or `X-API-Key: <key>`. Keys are compared
@@ -130,11 +130,11 @@ well.
 |---|---|
 | WPA2 or WPA3 with a strong passphrase | The main control, given the hardware weakness above |
 | Device on an IoT VLAN or separate SSID | Limits which hosts can reach it |
-| Set `LAMPLIGHT_API_KEY` | Stops other devices on your network commanding the service |
+| Set `LIMELIGHT_API_KEY` | Stops other devices on your network commanding the service |
 | Keep `config.json` at `0600` | The default; verify after any manual edit |
 | Do not forward the port | Use a VPN for outside access |
-| Bind to one interface if you do not need phone access | `lamplight serve --host 127.0.0.1` |
-| Never post `lamplight info` output unredacted | It can contain the token |
+| Bind to one interface if you do not need phone access | `limelight serve --host 127.0.0.1` |
+| Never post `limelight info` output unredacted | It can contain the token |
 
 ## Scope
 

@@ -4,5 +4,5 @@
     does not travel off the device in a cloud backup.
 -->
 <full-backup-content>
-    <exclude domain="sharedpref" path="lamplight.xml" />
+    <exclude domain="sharedpref" path="limelight.xml" />
 </full-backup-content>

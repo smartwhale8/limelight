@@ -43,7 +43,7 @@ Python and `java.time`.
 Server-side work that would help, none of it breaking:
 
 - **mDNS advertisement**, so a client finds the service without the user typing an address.
-  Publish `_lamplight._tcp.local` carrying the port, device name and `auth_required`.
+  Publish `_limelight._tcp.local` carrying the port, device name and `auth_required`.
 - **A pairing flow** better than typing a 48-character key. A short-lived code displayed by
   the server and exchanged for a token would be materially easier on a phone.
 - **Long-poll or server-sent events** for state, to cut battery cost. The device offers no
@@ -132,7 +132,7 @@ Two decisions that should not be made speculatively:
    Several classes may want a capability-keyed mapping instead, and that changes the API's
    `state` object.
 2. **Whether this remains one project.** A general device framework and a lamp controller
-   are different things. Splitting the driver contract into a library that lamplight
+   are different things. Splitting the driver contract into a library that limelight
    consumes is the alternative, and it is the better one if a second device class arrives
    from a different protocol family.
 

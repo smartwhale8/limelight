@@ -118,7 +118,7 @@ def handshake(ip: str, tries: int = 8, timeout: float = 1.5) -> dict:
 
 
 class MiioTransport(Transport):
-    """A :class:`~lamplight.drivers.base.Transport` over miIO, safe for use from any thread."""
+    """A :class:`~limelight.drivers.base.Transport` over miIO, safe for use from any thread."""
 
     def __init__(self, ip: str, token: str, device_id: int | None = None,
                  subnet: str = "192.168.1.", retries: int = 3):

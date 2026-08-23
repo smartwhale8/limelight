@@ -1,4 +1,4 @@
-package com.smartwhale8.lamplight.miio
+package com.smartwhale8.limelight.miio
 
 import java.nio.ByteBuffer
 import java.nio.ByteOrder

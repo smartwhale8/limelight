@@ -1,4 +1,4 @@
-package com.smartwhale8.lamplight.ui
+package com.smartwhale8.limelight.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -47,7 +47,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.smartwhale8.lamplight.device.Capability
+import com.smartwhale8.limelight.device.Capability
 
 /**
  * Controls for a connected lamp.

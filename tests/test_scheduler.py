@@ -12,14 +12,14 @@ from datetime import datetime
 
 import pytest
 
-from lamplight.config import Schedule
-from lamplight.scheduler import MIN_BRIGHTNESS, Scheduler
+from limelight.config import Schedule
+from limelight.scheduler import MIN_BRIGHTNESS, Scheduler
 
 
 @pytest.fixture(autouse=True)
 def fast_ramps(monkeypatch):
     """Shorten the step interval so a whole ramp completes in milliseconds."""
-    monkeypatch.setattr("lamplight.scheduler.STEP_SECONDS", 0.01)
+    monkeypatch.setattr("limelight.scheduler.STEP_SECONDS", 0.01)
 
 
 def wait_for_ramp(sched: Scheduler, timeout: float = 5.0) -> None:

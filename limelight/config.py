@@ -1,8 +1,8 @@
 """Configuration and persistence.
 
-State lives in ``~/.config/lamplight/config.json``, written with ``0600`` permissions
+State lives in ``~/.config/limelight/config.json``, written with ``0600`` permissions
 because it holds the device token, which is the only credential protecting the device on
-the local network. The path is overridable with ``LAMPLIGHT_CONFIG`` so tests and
+the local network. The path is overridable with ``LIMELIGHT_CONFIG`` so tests and
 multiple instances do not collide.
 
 Nothing in this file belongs in version control. The repository's ``.gitignore`` excludes
@@ -29,6 +29,7 @@ from __future__ import annotations
 
 import json
 import os
+import shutil
 import uuid
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
@@ -41,10 +42,41 @@ WEEKDAY_NAMES = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 SERVICE_DRIVEN_KINDS = ("sunrise", "fade_off")
 
 
+#: Where configuration lived before the project was renamed from lamplight to limelight.
+LEGACY_CONFIG_DIR = Path.home() / ".config" / "lamplight"
+
+
 def config_dir() -> Path:
-    """Return the configuration directory, overridable with ``LAMPLIGHT_CONFIG``."""
-    override = os.environ.get("LAMPLIGHT_CONFIG")
-    return Path(override).expanduser() if override else Path.home() / ".config" / "lamplight"
+    """Return the configuration directory, overridable with ``LIMELIGHT_CONFIG``.
+
+    The pre-rename ``LAMPLIGHT_CONFIG`` is still honoured, so an existing setup that sets
+    it keeps working.
+    """
+    override = os.environ.get("LIMELIGHT_CONFIG") or os.environ.get("LAMPLIGHT_CONFIG")
+    return Path(override).expanduser() if override else Path.home() / ".config" / "limelight"
+
+
+def migrate_legacy_config() -> Path | None:
+    """Copy a pre-rename configuration into place, once.
+
+    The project was called lamplight until 2.0.0, and the configuration directory moved
+    with the name. Without this an existing installation would look unconfigured and would
+    ask the user to adopt a device they had already adopted, which is worse than an error:
+    the device token is not trivial to recover a second time.
+
+    The original is copied rather than moved, so a downgrade still finds its configuration.
+    Returns the new path when something was migrated, otherwise None.
+    """
+    if os.environ.get("LIMELIGHT_CONFIG") or os.environ.get("LAMPLIGHT_CONFIG"):
+        return None                      # an explicit override is authoritative
+    new_dir = config_dir()
+    if new_dir.exists() or not LEGACY_CONFIG_DIR.exists():
+        return None
+    shutil.copytree(LEGACY_CONFIG_DIR, new_dir)
+    for item in new_dir.iterdir():
+        if item.is_file():
+            os.chmod(item, 0o600)        # the token must not become world-readable
+    return new_dir
 
 
 def config_file() -> Path:
@@ -148,6 +180,7 @@ class Config:
     @classmethod
     def load(cls) -> Config:
         """Read the configuration, returning defaults when the file does not exist."""
+        migrate_legacy_config()
         path = config_file()
         if not path.exists():
             return cls()
@@ -161,7 +194,7 @@ class Config:
             s.validate()
         # An environment variable wins over the file, so a key can be supplied by a
         # process manager without being written to disk.
-        cfg.server.api_key = os.environ.get("LAMPLIGHT_API_KEY", cfg.server.api_key)
+        cfg.server.api_key = os.environ.get("LIMELIGHT_API_KEY", cfg.server.api_key)
         return cfg
 
     def save(self) -> None:

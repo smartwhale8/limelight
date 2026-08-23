@@ -1,4 +1,4 @@
-"""lamplight: local control of Xiaomi-ecosystem lights over the miIO protocol.
+"""limelight: local control of Xiaomi-ecosystem lights over the miIO protocol.
 
 Devices are addressed directly on the local network: JSON-RPC payloads carried over UDP
 port 54321, encrypted with AES-128-CBC under a 16-byte per-device token. No cloud service
@@ -7,7 +7,7 @@ is involved.
 Layers, lowest first
 --------------------
 ``drivers.base``            The device contract: capabilities, transport protocol, and
-                            the abstract :class:`~lamplight.drivers.base.LightDriver`.
+                            the abstract :class:`~limelight.drivers.base.LightDriver`.
 ``drivers.miio_transport``  Encrypted UDP to miIO devices, with retry and rediscovery.
 ``drivers.philips_eyecare`` The concrete driver, including firmware quirk compensation.
 ``device``                  Builds a driver from stored configuration.
@@ -21,7 +21,7 @@ second device type to be added without touching the service. See ``docs/ARCHITEC
 for the reasoning and ``docs/DEVICES.md`` for the procedure.
 """
 
-__version__ = "1.1.1"
+__version__ = "2.0.0"
 
 from .config import Config, DeviceConfig, Schedule, ServerConfig
 from .device import (

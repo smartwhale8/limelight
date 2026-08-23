@@ -1,7 +1,7 @@
 """Device drivers.
 
 Importing this package registers every bundled driver, so
-:func:`lamplight.drivers.base.get_driver` can resolve a model identifier without the
+:func:`limelight.drivers.base.get_driver` can resolve a model identifier without the
 caller knowing which module implements it. A new driver is added by creating a module
 here and importing it below; see ``docs/DEVICES.md``.
 """

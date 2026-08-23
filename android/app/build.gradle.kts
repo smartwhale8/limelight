@@ -5,11 +5,11 @@ plugins {
 }
 
 android {
-    namespace = "com.smartwhale8.lamplight"
+    namespace = "com.smartwhale8.limelight"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.smartwhale8.lamplight"
+        applicationId = "com.smartwhale8.limelight"
         // Android 8.0. Nothing here needs anything newer, and it covers essentially
         // every device still receiving updates.
         minSdk = 26

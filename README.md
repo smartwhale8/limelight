@@ -1,10 +1,10 @@
 <div align="center">
 
-# lamplight
+# limelight
 
 **Local control for Xiaomi-ecosystem smart lights over the miIO protocol.**
 
-[![CI](https://github.com/smartwhale8/lamplight/actions/workflows/ci.yml/badge.svg)](https://github.com/smartwhale8/lamplight/actions/workflows/ci.yml)
+[![CI](https://github.com/smartwhale8/limelight/actions/workflows/ci.yml/badge.svg)](https://github.com/smartwhale8/limelight/actions/workflows/ci.yml)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
@@ -12,7 +12,7 @@
 
 ---
 
-lamplight controls a smart light directly over your local network. It provides a web
+limelight controls a smart light directly over your local network. It provides a web
 interface, a versioned JSON API, and a command line tool. It contacts no external service:
 every command is a UDP datagram sent from your machine to the device.
 
@@ -35,12 +35,12 @@ every command is a UDP datagram sent from your machine to the device.
 |  | |
 |---|---|
 | **Web interface** | Any browser, including a phone on the same network. Dark and light themes. |
-| **Android app** | Standalone client in [`android/`](android/), talking to the lamp directly over miIO with no server running. Download the APK from [Releases](https://github.com/smartwhale8/lamplight/releases). |
+| **Android app** | Standalone client in [`android/`](android/), talking to the lamp directly over miIO with no server running. Download the APK from [Releases](https://github.com/smartwhale8/limelight/releases). |
 | **JSON API** | Versioned at `/api/v1`, with an OpenAPI schema for generating clients. |
 | **Command line** | Every function scriptable, suitable for cron or other automation. |
 | **Sunrise wake-up** | Gradual brightness ramp over any duration. |
 | **Fade to sleep** | Gradual dim to off. |
-| **Sleep timer** | The device's own countdown, which continues if lamplight stops. |
+| **Sleep timer** | The device's own countdown, which continues if limelight stops. |
 | **Schedules** | Recurring actions per weekday, with the next firings listed. |
 | **Device control** | Power, brightness, eyecare mode, ambient light, four scenes, night light, fatigue reminder. |
 
@@ -66,7 +66,7 @@ Hardware details for that model:
 | Native transitions | None. Every command takes effect immediately. |
 | State notification | None. State must be polled. |
 
-Adding another miIO light is a new file in `lamplight/drivers/`. See
+Adding another miIO light is a new file in `limelight/drivers/`. See
 [docs/DEVICES.md](docs/DEVICES.md).
 
 ---
@@ -104,7 +104,7 @@ That identifier, not the brand, selects a driver.
 and property id. Both use the same transport, so the difference is purely a driver concern.
 This lamp is a legacy device.
 
-A cloud path over HTTPS also exists for devices bound to a Xiaomi account. lamplight never
+A cloud path over HTTPS also exists for devices bound to a Xiaomi account. limelight never
 uses it, and provisions with `uid=0` specifically to avoid creating that binding.
 
 ### Access points, and the two modes a device can be in
@@ -131,7 +131,7 @@ adoption attempt and is why [docs/ADOPTION.md](docs/ADOPTION.md) exists.
 ### Addressing: the device id matters more than the IP
 
 Addresses come from DHCP and move. Every miIO device also has a **device id**, a 32-bit
-integer fixed for the life of the hardware. lamplight stores both, and when commands start
+integer fixed for the life of the hardware. limelight stores both, and when commands start
 failing it re-runs discovery, matches on the device id, and updates the address by itself.
 
 ### Transport: why UDP means retries
@@ -210,7 +210,7 @@ an older client keeps working against a newer device.
 ```mermaid
 sequenceDiagram
     participant C as Client<br/>(browser, phone, curl)
-    participant S as lamplight<br/>HTTP service
+    participant S as limelight<br/>HTTP service
     participant D as Driver<br/>+ transport
     participant L as Lamp<br/>UDP 54321
 
@@ -243,25 +243,25 @@ Further reading: [docs/PROTOCOL.md](docs/PROTOCOL.md) for the wire format,
 Python 3.11 or newer.
 
 ```bash
-git clone https://github.com/smartwhale8/lamplight.git
-cd lamplight
+git clone https://github.com/smartwhale8/limelight.git
+cd limelight
 python -m venv .venv && source .venv/bin/activate
 pip install -e ".[server]" -c constraints.txt
 ```
 
 `constraints.txt` pins the exact versions this project is built and tested against, so the
-install is reproducible. `pyproject.toml` declares looser ranges, so lamplight can still be
+install is reproducible. `pyproject.toml` declares looser ranges, so limelight can still be
 installed alongside other packages that need different versions.
 
 ## Adopting a device
 
-**Adoption** means recording a device's address and token so lamplight can command it.
+**Adoption** means recording a device's address and token so limelight can command it.
 
 If the device is already on your network and discloses its token, this is one step:
 
 ```bash
-lamplight discover --subnet 192.168.1.
-lamplight adopt --auto --name "Desk lamp"
+limelight discover --subnet 192.168.1.
+limelight adopt --auto --name "Desk lamp"
 ```
 
 `discover` reports which devices disclose a token:
@@ -275,16 +275,16 @@ SoftAP, follow [docs/ADOPTION.md](docs/ADOPTION.md), which covers recovering the
 the setup access point and handing the device your Wi-Fi credentials. Then:
 
 ```bash
-lamplight adopt --ip 192.168.1.42 --token 0123456789abcdef0123456789abcdef
+limelight adopt --ip 192.168.1.42 --token 0123456789abcdef0123456789abcdef
 ```
 
-Settings are written to `~/.config/lamplight/config.json` at mode `0600`, because that file
+Settings are written to `~/.config/limelight/config.json` at mode `0600`, because that file
 holds the token.
 
 ## Running the service
 
 ```bash
-lamplight serve
+limelight serve
 ```
 
 Open <http://localhost:8765>, or `http://<your-machine-ip>:8765` from a phone on the same
@@ -293,32 +293,32 @@ network. `/docs` serves interactive API documentation and `/openapi.json` the sc
 ## Command line
 
 ```bash
-lamplight status                          # current device state
-lamplight on --brightness 60
-lamplight off
-lamplight brightness 35
-lamplight scene 3                         # 1 Study, 2 Office, 3 Reading, 4 Bedtime
-lamplight eyecare on
-lamplight ambient on --level 50
-lamplight timer 45                        # device countdown; survives lamplight exiting
-lamplight sunrise --minutes 20 --target 100
-lamplight fade --minutes 30
-lamplight schedules
-lamplight capabilities                    # what this device supports
-lamplight info                            # raw miIO.info
-lamplight models                          # drivers available
+limelight status                          # current device state
+limelight on --brightness 60
+limelight off
+limelight brightness 35
+limelight scene 3                         # 1 Study, 2 Office, 3 Reading, 4 Bedtime
+limelight eyecare on
+limelight ambient on --level 50
+limelight timer 45                        # device countdown; survives limelight exiting
+limelight sunrise --minutes 20 --target 100
+limelight fade --minutes 30
+limelight schedules
+limelight capabilities                    # what this device supports
+limelight info                            # raw miIO.info
+limelight models                          # drivers available
 ```
 
 ## Authentication
 
-lamplight requires no authentication by default. Anything that can reach the port can
+limelight requires no authentication by default. Anything that can reach the port can
 control the device.
 
 To require a key:
 
 ```bash
-export LAMPLIGHT_API_KEY="$(openssl rand -hex 24)"
-lamplight serve
+export LIMELIGHT_API_KEY="$(openssl rand -hex 24)"
+limelight serve
 ```
 
 Clients then send `Authorization: Bearer <key>`, or `X-API-Key: <key>`. The web interface
@@ -336,18 +336,18 @@ Wi-Fi password. See [SECURITY.md](SECURITY.md).
 ## Timed behaviour and its one limitation
 
 The device firmware implements exactly one timed feature: `delay_off`, a hard cut-off after
-N minutes. **Gradual wake-up and gradual fade-out do not exist in the hardware.** lamplight
+N minutes. **Gradual wake-up and gradual fade-out do not exist in the hardware.** limelight
 produces them by stepping `set_bright` every five seconds, which has a consequence:
 
-- A `sunrise` or `fade_off` ramp progresses **only while lamplight is running**. If the
+- A `sunrise` or `fade_off` ramp progresses **only while limelight is running**. If the
   host sleeps, the ramp stops where it was.
-- A `timer` schedule uses the device's own countdown and survives lamplight exiting, a
+- A `timer` schedule uses the device's own countdown and survives limelight exiting, a
   reboot, or the host sleeping.
 
 The API and the interface both mark which is which, through the `service_driven` field. For
-a wake-up you depend on, run lamplight on a machine that stays awake.
+a wake-up you depend on, run limelight on a machine that stays awake.
 
-| Schedule kind | Behaviour | Survives lamplight stopping |
+| Schedule kind | Behaviour | Survives limelight stopping |
 |---|---|---|
 | `sunrise` | On at 1%, ramping to the target over the duration | No |
 | `fade_off` | Ramp down to 1% over the duration, then off | No |
@@ -403,5 +403,5 @@ transport and cryptography.
 
 [MIT](LICENSE).
 
-lamplight is not affiliated with, endorsed by, or connected to Xiaomi, Signify, or Philips.
+limelight is not affiliated with, endorsed by, or connected to Xiaomi, Signify, or Philips.
 Product names identify the hardware the software controls.

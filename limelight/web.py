@@ -1,4 +1,4 @@
-"""The single-page interface, served inline by :mod:`lamplight.server`.
+"""The single-page interface, served inline by :mod:`limelight.server`.
 
 Self-contained by design: no external stylesheet, script, font or image, so the page
 works on a phone with no internet access as long as the phone can reach the host.
@@ -20,7 +20,7 @@ PAGE = r"""<!doctype html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#111417">
-<title>Lamplight</title>
+<title>Limelight</title>
 <style>
   :root{
     --bg:#f6f7f9; --card:#fff; --ink:#14181d; --muted:#697280; --line:#e3e6ea;
@@ -91,7 +91,7 @@ PAGE = r"""<!doctype html>
 </head>
 <body>
 
-<h1 id="title">Lamplight</h1>
+<h1 id="title">Limelight</h1>
 <div class="sub">
   <span id="dev">connecting…</span> <span id="live" class="pill">checking</span>
 </div>
@@ -218,8 +218,8 @@ let dragging = false, newDays = [0,1,2,3,4], caps = new Set(), scenesDrawn = fal
 // The key is only needed when the service has authentication enabled. It is kept in
 // localStorage so a phone does not have to be re-paired on every visit.
 const keyStore = {
-  get: () => localStorage.getItem("lamplight_key") || "",
-  set: v => localStorage.setItem("lamplight_key", v),
+  get: () => localStorage.getItem("limelight_key") || "",
+  set: v => localStorage.setItem("limelight_key", v),
 };
 
 function toast(msg, bad){
@@ -244,7 +244,7 @@ async function req(method, path, body){
     body: body === undefined ? undefined : JSON.stringify(body),
   });
   if(r.status === 401){
-    const k = prompt("This lamplight service requires an API key.");
+    const k = prompt("This limelight service requires an API key.");
     if(k){ keyStore.set(k.trim()); return req(method, path, body); }
     throw new Error("authentication required");
   }
@@ -328,7 +328,7 @@ function renderSchedules(list){
 
 function paint(d){
   const dev = d.device || {};
-  $("#title").textContent = dev.name || "Lamplight";
+  $("#title").textContent = dev.name || "Limelight";
   $("#dev").textContent = (dev.display_name || dev.model || "device") + " · " + (dev.address || "?");
   const live = $("#live");
   live.textContent = d.reachable ? "online" : "unreachable";

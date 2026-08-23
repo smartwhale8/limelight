@@ -1,4 +1,4 @@
-package com.smartwhale8.lamplight.ui
+package com.smartwhale8.limelight.ui
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -41,7 +41,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
-import com.smartwhale8.lamplight.miio.DiscoveredDevice
+import com.smartwhale8.limelight.miio.DiscoveredDevice
 
 /**
  * Finds lamps on the local network and lets the user connect to one.

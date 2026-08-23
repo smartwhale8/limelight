@@ -38,7 +38,7 @@ which in this project is entirely a driver concern. See
 [DEVICES.md](DEVICES.md#case-1-another-miio-device).
 
 A cloud protocol over HTTPS exists alongside this for devices bound to a Xiaomi account.
-lamplight does not use it, and provisions with `uid=0` specifically to avoid binding.
+limelight does not use it, and provisions with `uid=0` specifically to avoid binding.
 
 ## Overview
 
@@ -53,7 +53,7 @@ lamplight does not use it, and provisions with `uid=0` specifically to avoid bin
 | Controller | ESP8266 |
 
 Control is entirely local. The device will talk to a vendor cloud if it is bound to an
-account, but nothing in this protocol requires that, and lamplight never does it.
+account, but nothing in this protocol requires that, and limelight never does it.
 
 ## Packet layout
 
@@ -72,7 +72,7 @@ Every datagram, in both directions, begins with a 32-byte header.
 ```
 
 The device id at offset 8 is the only stable identity a device has. Addresses come from
-DHCP and move; the device id does not. lamplight uses it to find a device again after it
+DHCP and move; the device id does not. limelight uses it to find a device again after it
 changes address.
 
 ## The handshake, and how a token is recovered
@@ -102,7 +102,7 @@ provisioning, and `miIO.info` returns the token in its response as well. This is
 adoption mechanism and a weakness; see [../SECURITY.md](../SECURITY.md).
 
 Whether a token is disclosed depends on the firmware and on whether the device has been
-bound to a vendor account. Binding regenerates the token, which is why lamplight
+bound to a vendor account. Binding regenerates the token, which is why limelight
 provisions with `uid=0`, deliberately avoiding a binding.
 
 ```python
@@ -140,7 +140,7 @@ checksum = md5(header[0:16] + token + encrypted_payload)
 Build the header with the token in place, hash it, then overwrite that field with the
 result.
 
-`python-miio` implements all of this. lamplight does not reimplement the crypto; it uses
+`python-miio` implements all of this. limelight does not reimplement the crypto; it uses
 that library for framing and adds retry, rediscovery and locking on top.
 
 ## Payload format
@@ -192,7 +192,7 @@ One `get_prop` call returns everything, in the order requested:
 | `bls` | `"on"` / `"off"` | Smart night light |
 | `dvalue` | 0–n | Sleep timer, minutes remaining, 0 when unset |
 
-Some firmware returns fewer values than requested. lamplight zips with `strict=False` and
+Some firmware returns fewer values than requested. limelight zips with `strict=False` and
 reads with `.get()`, so a short reply yields `None` rather than an exception.
 
 ### Writing state

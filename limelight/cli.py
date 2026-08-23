@@ -3,23 +3,23 @@
 Every subcommand is a single blocking call that exits non-zero on failure, so these are
 safe to use from shell scripts, cron, or other automation.
 
-    lamplight discover                       # find miIO devices on the local subnet
-    lamplight adopt --auto                   # adopt a device that discloses its token
-    lamplight adopt --ip <addr> --token <hex>
-    lamplight status
-    lamplight on --brightness 60
-    lamplight off
-    lamplight brightness 35
-    lamplight scene 3
-    lamplight eyecare on
-    lamplight ambient on --level 50
-    lamplight timer 45                       # device countdown, survives this process
-    lamplight sunrise --minutes 20           # runs in the foreground
-    lamplight fade --minutes 30
-    lamplight schedules
-    lamplight capabilities
-    lamplight info
-    lamplight serve --port 8765
+    limelight discover                       # find miIO devices on the local subnet
+    limelight adopt --auto                   # adopt a device that discloses its token
+    limelight adopt --ip <addr> --token <hex>
+    limelight status
+    limelight on --brightness 60
+    limelight off
+    limelight brightness 35
+    limelight scene 3
+    limelight eyecare on
+    limelight ambient on --level 50
+    limelight timer 45                       # device countdown, survives this process
+    limelight sunrise --minutes 20           # runs in the foreground
+    limelight fade --minutes 30
+    limelight schedules
+    limelight capabilities
+    limelight info
+    limelight serve --port 8765
 
 ``discover`` and ``adopt --auto`` are the only subcommands that work before a device has
 been configured.
@@ -42,7 +42,7 @@ from .scheduler import Scheduler
 
 def _driver(cfg: Config) -> LightDriver:
     if not cfg.device.token:
-        sys.exit("No device configured. Run 'lamplight discover' or 'lamplight adopt --auto'.")
+        sys.exit("No device configured. Run 'limelight discover' or 'limelight adopt --auto'.")
     return build_driver(cfg.device.ip, cfg.device.token, model=cfg.device.model,
                         device_id=cfg.device.device_id, subnet=cfg.device.subnet)
 
@@ -283,9 +283,9 @@ def cmd_serve(args, cfg: Config) -> int:
 
 def build_parser() -> argparse.ArgumentParser:
     ap = argparse.ArgumentParser(
-        prog="lamplight", description=__doc__,
+        prog="limelight", description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--version", action="version", version=f"lamplight {__version__}")
+    ap.add_argument("--version", action="version", version=f"limelight {__version__}")
     sub = ap.add_subparsers(dest="cmd", required=True)
 
     p = sub.add_parser("discover", help="find miIO devices on the local subnet")

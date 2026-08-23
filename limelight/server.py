@@ -1,6 +1,6 @@
 """HTTP service and web interface.
 
-Run with ``lamplight serve``, ``python -m lamplight.server``, or ``./run.sh``.
+Run with ``limelight serve``, ``python -m limelight.server``, or ``./run.sh``.
 
 API versioning
 --------------
@@ -19,7 +19,7 @@ type appear without a client update. Calling an unsupported operation returns 40
 Authentication
 --------------
 Disabled when no key is configured, which keeps a private home setup frictionless. Set
-``LAMPLIGHT_API_KEY`` or ``server.api_key`` to require ``Authorization: Bearer <key>``
+``LIMELIGHT_API_KEY`` or ``server.api_key`` to require ``Authorization: Bearer <key>``
 (``X-API-Key`` is also accepted) on everything except ``/api/v1/health``. This is a
 shared secret over plain HTTP: it identifies a client on a trusted network and is not a
 substitute for a VPN when reaching the service from outside that network.
@@ -29,7 +29,7 @@ Construction
 :func:`create_app` builds a service around an injected configuration, driver and
 scheduler, so tests can exercise every route against a fake transport with no hardware
 and no network. The module-level ``app`` is created on first access, which is what
-``uvicorn lamplight.server:app`` resolves.
+``uvicorn limelight.server:app`` resolves.
 """
 
 from __future__ import annotations
@@ -58,7 +58,7 @@ from .drivers.miio_transport import discover
 from .scheduler import Scheduler
 from .web import PAGE
 
-log = logging.getLogger("lamplight")
+log = logging.getLogger("limelight")
 
 
 # --------------------------------------------------------------------- request bodies
@@ -132,7 +132,7 @@ def create_app(config: Config, driver: LightDriver,
     @asynccontextmanager
     async def lifespan(_: FastAPI):
         sched.start()
-        log.info("lamplight %s ready: %s at %s", __version__,
+        log.info("limelight %s ready: %s at %s", __version__,
                  driver.display_name, driver.address)
         if not config.server.api_key:
             log.info("authentication is disabled; any host on this network can "
@@ -141,7 +141,7 @@ def create_app(config: Config, driver: LightDriver,
         sched.stop()
 
     app = FastAPI(
-        title="lamplight",
+        title="limelight",
         version=__version__,
         summary="Local control of Xiaomi-ecosystem lights over the miIO protocol",
         lifespan=lifespan,
@@ -195,15 +195,15 @@ def create_app(config: Config, driver: LightDriver,
 
     # -------------------------------------------------------------------- routes
 
-    public = APIRouter(tags=["lamplight"])
-    api = APIRouter(tags=["lamplight"], dependencies=[Depends(require_api_key)])
+    public = APIRouter(tags=["limelight"])
+    api = APIRouter(tags=["limelight"], dependencies=[Depends(require_api_key)])
 
     @public.get("/health", summary="Liveness and identity; no authentication required")
     def health() -> dict:
         """Left unauthenticated so a client can find and identify the service."""
         return {
             "ok": True,
-            "service": "lamplight",
+            "service": "limelight",
             "version": __version__,
             "device_name": config.device.name,
             "model": driver.model,
@@ -369,9 +369,9 @@ def build_default_app() -> FastAPI:
     if not config.device.token:
         raise SystemExit(
             "No device configured. Adopt one first:\n"
-            "  lamplight discover\n"
-            "  lamplight adopt --auto\n"
-            "  lamplight adopt --ip <address> --token <32 hex characters>\n"
+            "  limelight discover\n"
+            "  limelight adopt --auto\n"
+            "  limelight adopt --ip <address> --token <32 hex characters>\n"
             "See docs/ADOPTION.md for recovering a token from the device."
         )
     driver = build_driver(config.device.ip, config.device.token,
@@ -383,7 +383,7 @@ def build_default_app() -> FastAPI:
 def __getattr__(name: str):
     """Build ``app`` on first access, so importing this module stays side-effect free.
 
-    ``uvicorn lamplight.server:app`` resolves through here. Tests import
+    ``uvicorn limelight.server:app`` resolves through here. Tests import
     :func:`create_app` instead and never trigger device contact.
     """
     if name == "app":
@@ -402,7 +402,7 @@ def main() -> None:
     logging.basicConfig(level=logging.INFO,
                         format="%(asctime)s %(levelname)s %(name)s: %(message)s")
     config = Config.load()
-    ap = argparse.ArgumentParser(description="Run the lamplight service")
+    ap = argparse.ArgumentParser(description="Run the limelight service")
     ap.add_argument("--host", default=config.server.host)
     ap.add_argument("--port", type=int, default=config.server.port)
     ap.add_argument("--log-level", default="info")

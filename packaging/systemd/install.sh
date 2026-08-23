@@ -1,5 +1,5 @@
 #!/bin/bash
-# Install a systemd --user unit so the lamplight service runs at login and restarts if it
+# Install a systemd --user unit so the limelight service runs at login and restarts if it
 # exits. A user unit is preferred over a system one because the configuration, including
 # the device token, lives in the user's home directory at mode 0600.
 #
@@ -8,21 +8,21 @@
 # device itself.
 set -euo pipefail
 
-UNIT="lamplight.service"
+UNIT="limelight.service"
 UNIT_DIR="$HOME/.config/systemd/user"
 UNIT_PATH="$UNIT_DIR/$UNIT"
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-PYTHON="${LAMPLIGHT_PYTHON:-$(command -v python3)}"
-PORT="${LAMPLIGHT_PORT:-8765}"
+PYTHON="${LIMELIGHT_PYTHON:-$(command -v python3)}"
+PORT="${LIMELIGHT_PORT:-8765}"
 
 if ! command -v systemctl >/dev/null; then
   echo "systemctl not found. On macOS use packaging/launchd/install.sh." >&2
   exit 1
 fi
 
-if ! "$PYTHON" -c "import lamplight" 2>/dev/null; then
-  echo "error: '$PYTHON' cannot import lamplight." >&2
-  echo "Install it first (pip install -e \".[server]\"), or set LAMPLIGHT_PYTHON to the" >&2
+if ! "$PYTHON" -c "import limelight" 2>/dev/null; then
+  echo "error: '$PYTHON' cannot import limelight." >&2
+  echo "Install it first (pip install -e \".[server]\"), or set LIMELIGHT_PYTHON to the" >&2
   echo "interpreter of the environment where it is installed." >&2
   exit 1
 fi
@@ -45,20 +45,20 @@ mkdir -p "$UNIT_DIR"
 
 cat > "$UNIT_PATH" <<EOF
 [Unit]
-Description=lamplight, local control for miIO smart lights
-Documentation=https://github.com/smartwhale8/lamplight
+Description=limelight, local control for miIO smart lights
+Documentation=https://github.com/smartwhale8/limelight
 After=network-online.target
 Wants=network-online.target
 
 [Service]
 Type=simple
 WorkingDirectory=$REPO
-ExecStart=$PYTHON -m lamplight.server --port $PORT
+ExecStart=$PYTHON -m limelight.server --port $PORT
 Restart=on-failure
 RestartSec=30
 
 # An API key can be supplied here rather than written into config.json:
-# Environment=LAMPLIGHT_API_KEY=...
+# Environment=LIMELIGHT_API_KEY=...
 
 # Modest hardening. The service needs only outbound UDP on the local network,
 # a listening TCP socket, and its own configuration directory.
@@ -66,7 +66,7 @@ NoNewPrivileges=true
 PrivateTmp=true
 ProtectSystem=strict
 ProtectHome=read-only
-ReadWritePaths=%h/.config/lamplight
+ReadWritePaths=%h/.config/limelight
 ProtectKernelTunables=true
 ProtectKernelModules=true
 ProtectControlGroups=true

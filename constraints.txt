@@ -1,6 +1,6 @@
 # Exact versions this project is built and tested against.
 #
-# pyproject.toml declares abstract ranges, so lamplight can be installed alongside
+# pyproject.toml declares abstract ranges, so limelight can be installed alongside
 # other packages. This file records the concrete resolution, so a build is
 # reproducible and an upstream release cannot turn CI red for reasons unrelated to
 # a change here. That is not hypothetical: an unpinned starlette release began

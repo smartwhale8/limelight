@@ -100,7 +100,7 @@ jobs:
         run: gradle --no-daemon assembleDebug
       - uses: actions/upload-artifact@v4
         with:
-          name: lamplight-debug-apk
+          name: limelight-debug-apk
           path: android/app/build/outputs/apk/debug/*.apk
           if-no-files-found: warn
           # Builds between releases stay fetchable for as long as GitHub allows.

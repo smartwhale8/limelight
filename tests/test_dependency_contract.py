@@ -5,7 +5,7 @@ tests assert exactly that surface, so upgrading the library fails here with a cl
 message rather than at runtime against a device.
 
 If one of these fails after an upgrade, the fix is confined to
-``lamplight/drivers/miio_transport.py``. Nothing else in the project imports miio.
+``limelight/drivers/miio_transport.py``. Nothing else in the project imports miio.
 """
 
 from __future__ import annotations
@@ -73,7 +73,7 @@ def test_we_do_not_use_the_broken_configure_wifi_helper():
     ``miIO.config_router`` directly instead. This test guards against someone reaching for
     the helper later.
     """
-    from lamplight.drivers import miio_transport
+    from limelight.drivers import miio_transport
 
     source = inspect.getsource(miio_transport)
     assert "configure_wifi(" in source, "our own configure_wifi should exist"
@@ -89,7 +89,7 @@ def test_no_other_module_imports_miio(attribute):
     import pathlib
 
     offenders = []
-    for path in pathlib.Path("lamplight").rglob("*.py"):
+    for path in pathlib.Path("limelight").rglob("*.py"):
         if path.name == "miio_transport.py":
             continue
         text = path.read_text()
@@ -107,12 +107,12 @@ def test_version_matches_pyproject():
     import pathlib
     import re
 
-    import lamplight
+    import limelight
 
     pyproject = pathlib.Path(__file__).parent.parent / "pyproject.toml"
     declared = re.search(r'^version = "([^"]+)"', pyproject.read_text(), re.M)
     assert declared, "no version found in pyproject.toml"
-    assert lamplight.__version__ == declared.group(1), (
-        f"lamplight.__version__ is {lamplight.__version__} but pyproject.toml "
+    assert limelight.__version__ == declared.group(1), (
+        f"limelight.__version__ is {limelight.__version__} but pyproject.toml "
         f"says {declared.group(1)}"
     )

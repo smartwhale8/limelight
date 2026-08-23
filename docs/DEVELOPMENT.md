@@ -24,8 +24,8 @@ Python 3.11 or newer. The floor is 3.11 because the code uses `enum.StrEnum` and
 `X | None` annotations at runtime.
 
 ```bash
-git clone https://github.com/smartwhale8/lamplight.git
-cd lamplight
+git clone https://github.com/smartwhale8/limelight.git
+cd limelight
 python -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev]" -c constraints.txt
 ```
@@ -60,7 +60,7 @@ rm -rf /tmp/resolve
 and an introspectable API.
 
 Our surface is deliberately tiny: two imports and three calls, all inside
-`lamplight/drivers/miio_transport.py`. `tests/test_dependency_contract.py` asserts that
+`limelight/drivers/miio_transport.py`. `tests/test_dependency_contract.py` asserts that
 surface and also enforces that no other module imports `miio`, so a future migration has one
 file to change and fails loudly rather than at runtime against a device.
 
@@ -89,9 +89,9 @@ should not have to install a web framework.
 ## Running it
 
 ```bash
-lamplight serve                     # reads host and port from configuration
-lamplight serve --port 9000
-python -m lamplight.server          # equivalent
+limelight serve                     # reads host and port from configuration
+limelight serve --port 9000
+python -m limelight.server          # equivalent
 ./run.sh                            # prints the phone-reachable URL too
 ```
 
@@ -101,20 +101,20 @@ Then <http://localhost:8765>, plus `/docs` for interactive API documentation and
 For iterating on `server.py` or `web.py`, use reload:
 
 ```bash
-uvicorn lamplight.server:app --reload --port 8765
+uvicorn limelight.server:app --reload --port 8765
 ```
 
 Reload works because the module-level `app` is built lazily through a module
-`__getattr__`. Importing `lamplight.server` contacts no hardware.
+`__getattr__`. Importing `limelight.server` contacts no hardware.
 
 ### Configuration during development
 
-Configuration lives in `~/.config/lamplight/config.json`. Redirect it to keep experiments
+Configuration lives in `~/.config/limelight/config.json`. Redirect it to keep experiments
 away from a working setup:
 
 ```bash
-export LAMPLIGHT_CONFIG=/tmp/lamplight-dev
-lamplight adopt --ip 192.168.1.42 --token <token>
+export LIMELIGHT_CONFIG=/tmp/limelight-dev
+limelight adopt --ip 192.168.1.42 --token <token>
 ```
 
 The test suite sets this automatically for every test, so a run can never read or
@@ -134,7 +134,7 @@ the compensation code rot unnoticed.
 ```python
 import sys; sys.path.insert(0, ".")
 from tests.fakes import FakeTransport
-from lamplight.drivers.philips_eyecare import PhilipsEyecareLamp
+from limelight.drivers.philips_eyecare import PhilipsEyecareLamp
 
 lamp = PhilipsEyecareLamp(FakeTransport())
 lamp.turn_on()
@@ -147,8 +147,8 @@ To exercise the HTTP layer:
 
 ```python
 from fastapi.testclient import TestClient
-from lamplight.config import Config, DeviceConfig
-from lamplight.server import create_app
+from limelight.config import Config, DeviceConfig
+from limelight.server import create_app
 
 cfg = Config(device=DeviceConfig(ip="192.168.1.50", token="0" * 32,
                                  model="philips.light.sread1"))
@@ -261,7 +261,7 @@ command, or a model string. See [ARCHITECTURE.md](ARCHITECTURE.md).
 ### Turn on debug logging
 
 ```bash
-lamplight serve --log-level debug
+limelight serve --log-level debug
 ```
 
 Or in a script:
@@ -277,16 +277,16 @@ logging.basicConfig(level=logging.DEBUG)
 ### Talk to a device by hand
 
 ```bash
-python -m lamplight.cli info                       # miIO.info
-python -m lamplight.cli status --json --raw        # decoded plus the raw reply
-python -m lamplight.cli discover --subnet 192.168.1.
+python -m limelight.cli info                       # miIO.info
+python -m limelight.cli status --json --raw        # decoded plus the raw reply
+python -m limelight.cli discover --subnet 192.168.1.
 ```
 
 Raw commands, including undocumented ones:
 
 ```python
-from lamplight.config import Config
-from lamplight.device import build_driver
+from limelight.config import Config
+from limelight.device import build_driver
 
 cfg = Config.load()
 d = build_driver(cfg.device.ip, cfg.device.token, model=cfg.device.model)
@@ -317,7 +317,7 @@ usually enough to tell "the device is ignoring us" from "the datagram never left
 
 ### Add a device
 
-A new module in `lamplight/drivers/`, one import, one test. Full walkthrough in
+A new module in `limelight/drivers/`, one import, one test. Full walkthrough in
 [DEVICES.md](DEVICES.md).
 
 ### Add a capability
@@ -349,7 +349,7 @@ fine. Removing or repurposing one is not, within a major version.
 ### Regenerate the client schema
 
 ```bash
-lamplight serve &
+limelight serve &
 curl -s http://localhost:8765/openapi.json > openapi.json
 ```
 
@@ -406,7 +406,7 @@ Probe `.1` directly or sweep the subnet.
 Versions follow [semantic versioning](https://semver.org/). The API contract in
 [API.md](API.md) is what the major number protects.
 
-1. Update `__version__` in `lamplight/__init__.py` and `version` in `pyproject.toml`.
+1. Update `__version__` in `limelight/__init__.py` and `version` in `pyproject.toml`.
    They must match; a test could usefully enforce that.
 2. Move the `Unreleased` entries in [CHANGELOG.md](../CHANGELOG.md) under the new version
    with a date.
@@ -440,7 +440,7 @@ device and says so. If you cannot measure it, mark it unverified.
 **Document the traps.** Firmware defects, platform restrictions and library bugs all cost
 time to find. Each one found here is written down, with its numbers, so nobody pays twice.
 
-**Secrets stay out of the tree.** The token lives in `~/.config/lamplight/config.json` at
+**Secrets stay out of the tree.** The token lives in `~/.config/limelight/config.json` at
 mode `0600`. `.gitignore` blocks the obvious filenames. Never put a real token, MAC
 address or network name in a commit, a test fixture or a document. Use `0` × 32,
 `AA:BB:CC:DD:EE:FF`, and `192.168.1.x`.

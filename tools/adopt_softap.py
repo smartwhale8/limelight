@@ -54,14 +54,14 @@ from pathlib import Path
 # Allow running straight from a checkout, without installing the package.
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from lamplight.drivers.base import DeviceError
-from lamplight.drivers.miio_transport import (
+from limelight.drivers.base import DeviceError
+from limelight.drivers.miio_transport import (
     HELLO,
     MIIO_PORT,
     MiioTransport,
     handshake,
 )
-from lamplight.drivers.philips_eyecare import PROPS
+from limelight.drivers.philips_eyecare import PROPS
 
 #: miIO setup networks hand out 192.168.4.x and answer here, advertising no gateway.
 DEFAULT_SOFTAP_HOST = "192.168.4.1"
@@ -380,11 +380,11 @@ class Adoption:
                 print(f"    home address {self.report['home_address']}")
                 print()
                 print("  Adopt it with:")
-                print(f"    lamplight adopt --ip {self.report['home_address']} "
+                print(f"    limelight adopt --ip {self.report['home_address']} "
                       f"--token {hs['token']}")
             elif self.report["provisioned"]:
                 print("  Provisioned, but not yet located on the home network.")
-                print("  It may still be joining. Try:  lamplight discover")
+                print("  It may still be joining. Try:  limelight discover")
             else:
                 print("  Not provisioned. The device is still in setup mode.")
                 print("  Re-run with --password-file to hand it your Wi-Fi credentials.")

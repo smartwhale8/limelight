@@ -11,9 +11,9 @@ from __future__ import annotations
 import pytest
 from fastapi.testclient import TestClient
 
-from lamplight.config import Config, DeviceConfig, ServerConfig
-from lamplight.drivers.philips_eyecare import PhilipsEyecareLamp
-from lamplight.server import create_app
+from limelight.config import Config, DeviceConfig, ServerConfig
+from limelight.drivers.philips_eyecare import PhilipsEyecareLamp
+from limelight.server import create_app
 
 from .fakes import FakeTransport
 
@@ -33,7 +33,7 @@ def test_health_needs_no_authentication_even_when_a_key_is_set(config, driver):
 
 def test_health_reports_service_identity(client):
     body = client.get(f"{V1}/health").json()
-    assert body["service"] == "lamplight"
+    assert body["service"] == "limelight"
     assert body["model"] == "philips.light.sread1"
     assert body["auth_required"] is False
 
@@ -283,21 +283,21 @@ def test_only_the_versioned_prefix_is_published_in_the_schema(client):
 
 def test_openapi_schema_is_served_for_client_generation(client):
     schema = client.get("/openapi.json").json()
-    assert schema["info"]["title"] == "lamplight"
+    assert schema["info"]["title"] == "limelight"
     assert f"{V1}/state" in schema["paths"]
 
 
 def test_index_page_is_served(client):
     r = client.get("/")
     assert r.status_code == 200
-    assert "Lamplight" in r.text
+    assert "Limelight" in r.text
     assert "/api/v1" in r.text, "the page must call the versioned API"
 
 
 # ------------------------------------------------------------------------ discovery
 
 def test_discover_never_returns_a_token(client, monkeypatch):
-    monkeypatch.setattr("lamplight.server.discover",
+    monkeypatch.setattr("limelight.server.discover",
                         lambda *a, **k: [{"ip": "192.168.1.50", "device_id": 1,
                                           "token": "s" * 32}])
     body = client.post(f"{V1}/discover").json()

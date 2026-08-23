@@ -9,14 +9,14 @@ from __future__ import annotations
 
 import pytest
 
-from lamplight.drivers.base import (
+from limelight.drivers.base import (
     Capability,
     LightState,
     OperationNotSupported,
     get_driver,
     supported_models,
 )
-from lamplight.drivers.philips_eyecare import PROPS, SCENES, PhilipsEyecareLamp
+from limelight.drivers.philips_eyecare import PROPS, SCENES, PhilipsEyecareLamp
 
 from .fakes import QUIRK_BRIGHTNESS, FakeTransport
 

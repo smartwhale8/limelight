@@ -1,4 +1,4 @@
-"""Device abstraction: the contract every lamplight driver implements.
+"""Device abstraction: the contract every limelight driver implements.
 
 Purpose
 -------
@@ -125,7 +125,7 @@ class LightState:
 
 
 class LightDriver(ABC):
-    """The operations lamplight expects of a light.
+    """The operations limelight expects of a light.
 
     Subclasses declare :attr:`model`, :attr:`display_name` and :attr:`capabilities`, then
     implement the operations their capability set claims. The default implementations

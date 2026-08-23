@@ -2,7 +2,7 @@
 
 This module is the seam between configuration and hardware. Everything above it (the
 scheduler, the HTTP service, the CLI) depends only on
-:class:`~lamplight.drivers.base.LightDriver`, so adding a device type changes nothing but
+:class:`~limelight.drivers.base.LightDriver`, so adding a device type changes nothing but
 the registry lookup here.
 
 Names from the pre-driver layout are re-exported for compatibility, since the 0.x CLI and

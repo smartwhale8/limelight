@@ -1,5 +1,5 @@
 #!/bin/bash
-# Install a per-user launchd agent so the lamplight service runs at login and restarts if
+# Install a per-user launchd agent so the limelight service runs at login and restarts if
 # it exits. Paths are substituted from the current environment rather than hard-coded,
 # because launchd requires absolute paths and will not expand ~ or read your PATH.
 #
@@ -7,22 +7,22 @@
 # by this service, not by the device. Only the `timer` schedule kind runs on the device.
 set -euo pipefail
 
-LABEL="io.github.smartwhale8.lamplight"
+LABEL="io.github.smartwhale8.limelight"
 AGENT_DIR="$HOME/Library/LaunchAgents"
 PLIST="$AGENT_DIR/$LABEL.plist"
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-PYTHON="${LAMPLIGHT_PYTHON:-$(command -v python3)}"
-PORT="${LAMPLIGHT_PORT:-8765}"
-LOG="$HOME/Library/Logs/lamplight.log"
+PYTHON="${LIMELIGHT_PYTHON:-$(command -v python3)}"
+PORT="${LIMELIGHT_PORT:-8765}"
+LOG="$HOME/Library/Logs/limelight.log"
 
 if [[ "$(uname -s)" != "Darwin" ]]; then
   echo "This script is for macOS. On Linux use packaging/systemd/install.sh." >&2
   exit 1
 fi
 
-if ! "$PYTHON" -c "import lamplight" 2>/dev/null; then
-  echo "error: '$PYTHON' cannot import lamplight." >&2
-  echo "Install it first (pip install -e \".[server]\"), or set LAMPLIGHT_PYTHON to the" >&2
+if ! "$PYTHON" -c "import limelight" 2>/dev/null; then
+  echo "error: '$PYTHON' cannot import limelight." >&2
+  echo "Install it first (pip install -e \".[server]\"), or set LIMELIGHT_PYTHON to the" >&2
   echo "interpreter of the environment where it is installed." >&2
   exit 1
 fi
@@ -57,7 +57,7 @@ cat > "$PLIST" <<EOF
     <array>
         <string>$PYTHON</string>
         <string>-m</string>
-        <string>lamplight.server</string>
+        <string>limelight.server</string>
         <string>--port</string>
         <string>$PORT</string>
     </array>

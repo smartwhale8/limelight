@@ -1,7 +1,7 @@
 # ---------------------------------------------------------------------------
 # Secrets. A device token grants full control of the device, so nothing that
 # could carry one is ever committed. The real configuration lives outside the
-# tree in ~/.config/lamplight, but these patterns guard against a stray copy.
+# tree in ~/.config/limelight, but these patterns guard against a stray copy.
 # ---------------------------------------------------------------------------
 config.json
 *.local.json

@@ -1,4 +1,4 @@
-# Lamplight for Android
+# Limelight for Android
 
 A standalone Android client that talks to the lamp **directly over miIO**, with no server
 in between.
@@ -20,7 +20,7 @@ different set of controls with no code change.
 
 ## Install it
 
-Download the APK from [Releases](https://github.com/smartwhale8/lamplight/releases) and
+Download the APK from [Releases](https://github.com/smartwhale8/limelight/releases) and
 sideload it. Your browser or file manager will ask for permission to install once.
 
 It is a debug build, signed with the standard debug key. That is fine for sideloading and
@@ -78,7 +78,7 @@ The packets looked plausible and would have failed against the firmware.
 ## Layout
 
 ```
-app/src/main/java/com/smartwhale8/lamplight/
+app/src/main/java/com/smartwhale8/limelight/
   MainActivity.kt              single activity, picks discovery or control
   miio/
     MiioCodec.kt               packet framing and cryptography

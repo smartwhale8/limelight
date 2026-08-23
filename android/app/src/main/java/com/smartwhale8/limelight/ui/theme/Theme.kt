@@ -1,4 +1,4 @@
-package com.smartwhale8.lamplight.ui.theme
+package com.smartwhale8.limelight.ui.theme
 
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -15,7 +15,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 
-// A warm amber, chosen because the product is a lamp and the accent reads as lamplight.
+// A warm amber, chosen because the product is a lamp and the accent reads as limelight.
 private val Amber = Color(0xFFC8811F)
 private val AmberLight = Color(0xFFE0A44A)
 
@@ -58,7 +58,7 @@ private val AppTypography = Typography(
  * matches the device's wallpaper palette. Otherwise the amber scheme above applies.
  */
 @Composable
-fun LamplightTheme(
+fun LimelightTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     dynamicColor: Boolean = true,
     content: @Composable () -> Unit,

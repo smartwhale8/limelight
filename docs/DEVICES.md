@@ -1,6 +1,6 @@
 # Adding a device
 
-lamplight supports one device today. The architecture assumes more, and adding one is a
+limelight supports one device today. The architecture assumes more, and adding one is a
 new file plus one import. This walks through it.
 
 ## Before you start
@@ -8,7 +8,7 @@ new file plus one import. This walks through it.
 You need the device's **model identifier**, the string it reports in `miIO.info`:
 
 ```bash
-lamplight adopt --ip <address> --token <token>    # fails, but usefully
+limelight adopt --ip <address> --token <token>    # fails, but usefully
 ```
 
 The failure names what it found:
@@ -21,7 +21,7 @@ See docs/DEVICES.md to add one.
 Or ask directly:
 
 ```python
-from lamplight.drivers.miio_transport import MiioTransport
+from limelight.drivers.miio_transport import MiioTransport
 print(MiioTransport("192.168.1.42", "<token>").info())
 ```
 
@@ -41,7 +41,7 @@ are addressed. See [PROTOCOL.md](PROTOCOL.md#what-miio-is) for the background.
 Probe for it, since a device answers only the form it implements:
 
 ```python
-from lamplight.drivers.miio_transport import MiioTransport
+from limelight.drivers.miio_transport import MiioTransport
 t = MiioTransport("192.168.1.42", "<token>")
 
 try:
@@ -69,7 +69,7 @@ There is no registry, so the practical route is: check whether
 model and read its property list, then confirm against your device.
 
 ```python
-from lamplight.drivers.miio_transport import MiioTransport
+from limelight.drivers.miio_transport import MiioTransport
 t = MiioTransport("192.168.1.42", "<token>")
 
 # Try a candidate list. Unsupported names typically return None rather than erroring.
@@ -82,7 +82,7 @@ much as the code.
 
 ### 2. Write the driver
 
-Create `lamplight/drivers/<vendor>_<product>.py`:
+Create `limelight/drivers/<vendor>_<product>.py`:
 
 ```python
 """Driver for the Example Smart Bulb (``example.light.bulb``).
@@ -151,7 +151,7 @@ Rules that matter:
 
 ### 3. Register it
 
-Add one import to `lamplight/drivers/__init__.py`. Importing the module runs the
+Add one import to `limelight/drivers/__init__.py`. Importing the module runs the
 `@register` decorator, which is what makes the model resolvable.
 
 ```python
@@ -165,8 +165,8 @@ Add it to `__all__` too.
 Nothing here needs the device:
 
 ```python
-from lamplight.drivers.base import Capability, get_driver
-from lamplight.drivers.example_bulb import ExampleBulb
+from limelight.drivers.base import Capability, get_driver
+from limelight.drivers.example_bulb import ExampleBulb
 from .fakes import FakeTransport
 
 

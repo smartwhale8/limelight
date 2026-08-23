@@ -53,7 +53,7 @@ jobs:
           set -euo pipefail
           TAG="${GITHUB_REF_NAME:-${{ github.event.inputs.tag }}}"
           mkdir -p release
-          cp android/app/build/outputs/apk/debug/app-debug.apk "release/lamplight-${TAG}.apk"
+          cp android/app/build/outputs/apk/debug/app-debug.apk "release/limelight-${TAG}.apk"
           ls -lh release/
 
       - uses: actions/setup-python@v5
@@ -81,8 +81,8 @@ jobs:
             installation from your browser or file manager the first time. The app finds
             the lamp on your Wi-Fi by itself and needs nothing else running.
 
-            **Python service.** `pip install lamplight-*.whl`, then `lamplight discover`
-            and `lamplight adopt --auto`.
+            **Python service.** `pip install limelight-*.whl`, then `limelight discover`
+            and `limelight adopt --auto`.
 
             The APK is a debug build, so it is signed with the standard debug key rather
             than a release key. That is fine for sideloading and means it cannot be

@@ -10,6 +10,47 @@ contract in [docs/API.md](docs/API.md) is what the major version protects.
 
 Nothing yet.
 
+## [2.0.0] - 2026-08-23
+
+**The project is renamed from lamplight to limelight.** Entries below this one were written
+under the old name.
+
+The reason is concrete rather than cosmetic: `lamplight` is taken on PyPI by an unrelated
+package, so `pip install lamplight` fetched an OpenAI wrapper rather than this project. The
+distribution name would have had to differ from the import name forever, leaving two names
+to explain and a trap for anyone who guessed. `limelight` is free, so the repository, the
+distribution, the import name, the console script and the Android application id are now all
+the same word.
+
+The name is also apt: limelight was a real lighting technology, burning calcium oxide to
+produce an intense white light, used to light theatre stages from the 1830s.
+
+### Changed
+
+- **Breaking: the import name is now `limelight`.** `import lamplight` no longer resolves.
+- **Breaking: the console scripts are `limelight` and `limelight-server`.**
+- **Breaking: the distribution is `limelight`**, installed with `pip install limelight`.
+- **Breaking: the Android application id is `com.smartwhale8.limelight`**, so the app
+  installs alongside an older build rather than upgrading it. Remove the old one.
+- Configuration moved to `~/.config/limelight/`.
+- Environment variables are `LIMELIGHT_CONFIG`, `LIMELIGHT_API_KEY`, `LIMELIGHT_PYTHON` and
+  `LIMELIGHT_PORT`. The `LAMPLIGHT_` forms of the two configuration variables are still
+  honoured.
+- The `launchd` label is `io.github.smartwhale8.limelight` and the `systemd` unit is
+  `limelight.service`. Reinstall them if you had them.
+
+**The HTTP API is unchanged and remains at `/api/v1`.** The major version reflects the
+rename of the package and its entry points, not a change to the wire contract, so a client
+built against `/api/v1` keeps working.
+
+### Added
+
+- Automatic migration of a pre-rename configuration. On first run, `~/.config/lamplight/` is
+  copied to `~/.config/limelight/` with `0600` permissions preserved, and the original is
+  left in place. Without this an existing installation would look unconfigured and ask the
+  user to re-adopt a device, which is worse than an error because the device token is not
+  trivial to recover a second time.
+
 ## [1.1.1] - 2026-08-23
 
 ### Fixed
@@ -112,7 +153,7 @@ First release.
   dark and light themes, and sliders that commit on release rather than per pixel.
 - Command line covering discovery, adoption, every device function, foreground ramps,
   schedule listing, capability inspection, and running the service.
-- `lamplight adopt --auto`, adopting a device that discloses its own token in one step.
+- `limelight adopt --auto`, adopting a device that discloses its own token in one step.
 
 **Project**
 
@@ -135,7 +176,8 @@ First release.
   software: the device discloses its own token to any unauthenticated request on the local
   network, and its setup access point is open and unencrypted.
 
-[Unreleased]: https://github.com/smartwhale8/lamplight/compare/v1.1.1...HEAD
-[1.1.1]: https://github.com/smartwhale8/lamplight/releases/tag/v1.1.1
-[1.1.0]: https://github.com/smartwhale8/lamplight/releases/tag/v1.1.0
-[1.0.0]: https://github.com/smartwhale8/lamplight/releases/tag/v1.0.0
+[Unreleased]: https://github.com/smartwhale8/limelight/compare/v2.0.0...HEAD
+[2.0.0]: https://github.com/smartwhale8/limelight/releases/tag/v2.0.0
+[1.1.1]: https://github.com/smartwhale8/limelight/releases/tag/v1.1.1
+[1.1.0]: https://github.com/smartwhale8/limelight/releases/tag/v1.1.0
+[1.0.0]: https://github.com/smartwhale8/limelight/releases/tag/v1.0.0

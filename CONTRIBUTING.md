@@ -14,8 +14,8 @@ self-contained.
 ## Setting up
 
 ```bash
-git clone https://github.com/smartwhale8/lamplight.git
-cd lamplight
+git clone https://github.com/smartwhale8/limelight.git
+cd limelight
 python -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev]"
 pytest -q && ruff check .
@@ -46,7 +46,7 @@ than stating it.
 **Document the traps.** Firmware defects, platform restrictions and upstream bugs cost time
 to find. Write down what you found, with its numbers, so nobody pays twice.
 
-**Respect the layering rule.** Nothing above `lamplight/drivers/` may reference a specific
+**Respect the layering rule.** Nothing above `limelight/drivers/` may reference a specific
 device, miIO command, or model string. See
 [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
@@ -102,10 +102,10 @@ Do not include generated attribution trailers.
 
 ## Reporting a bug
 
-Include your `lamplight --version`, Python version and platform, the model and firmware
-from `lamplight info`, what you expected, what happened, and debug output where relevant.
+Include your `limelight --version`, Python version and platform, the model and firmware
+from `limelight info`, what you expected, what happened, and debug output where relevant.
 
-**Redact first.** `lamplight info` includes the token on some firmware, and raw replies may
+**Redact first.** `limelight info` includes the token on some firmware, and raw replies may
 include your network name.
 
 ## Code of conduct
