@@ -1,0 +1,8 @@
+# pyproject.toml is authoritative. This file exists for tooling that expects it.
+#
+#   pip install -e ".[server]"    runtime, with the HTTP service
+#   pip install -e ".[dev]"       the above, plus tests and linting
+#
+python-miio>=0.5.12
+fastapi>=0.110
+uvicorn[standard]>=0.27

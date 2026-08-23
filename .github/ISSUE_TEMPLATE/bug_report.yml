@@ -1,0 +1,74 @@
+name: Bug report
+description: Something does not work as documented
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Before filing, please check [docs/TROUBLESHOOTING.md](https://github.com/smartwhale8/lamplight/blob/main/docs/TROUBLESHOOTING.md).
+        It covers most reported problems, including unreachable devices, failed adoption,
+        and schedules that did not fire.
+
+        **Redact your output.** `lamplight info` includes the device token on some
+        firmware, and raw replies may include your network name. Replace them with
+        `<token>` and `<ssid>`.
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What you expected, and what occurred instead.
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. lamplight adopt --auto
+        2. lamplight serve
+        3. POST /api/v1/sunrise with {"duration_min": 20}
+        4. ...
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: lamplight version
+      description: Output of `lamplight --version`
+    validations:
+      required: true
+
+  - type: input
+    id: python
+    attributes:
+      label: Python version and platform
+      placeholder: "3.12.4 on macOS 15.1, Apple Silicon"
+    validations:
+      required: true
+
+  - type: input
+    id: model
+    attributes:
+      label: Device model and firmware
+      description: From `lamplight info`. Leave blank if the problem is not device-related.
+      placeholder: "philips.light.sread1, fw_ver 1.2.8"
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Output
+      description: Relevant output, ideally from `lamplight serve --log-level debug`.
+      render: shell
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Confirmations
+      options:
+        - label: I have removed any token, MAC address, or network name from the output above
+          required: true
+        - label: I have read the relevant section of docs/TROUBLESHOOTING.md
+          required: true

@@ -1,0 +1,87 @@
+name: Device support request
+description: Ask for a driver for a device that is not yet supported
+labels: [device-support]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        For a miIO light, a driver is usually one file and one test. If you have the device
+        in hand, [docs/DEVICES.md](https://github.com/smartwhale8/lamplight/blob/main/docs/DEVICES.md)
+        walks through writing one, and a pull request is more likely to arrive quickly than
+        a request.
+
+        The information below is what makes a driver possible to write without owning the
+        device.
+
+  - type: input
+    id: model
+    attributes:
+      label: Model identifier
+      description: >
+        The `model` field from `miIO.info`. Get it with
+        `lamplight adopt --ip <address> --token <token>`, which fails with the model name,
+        or from `lamplight info` if another device is already configured.
+      placeholder: "philips.light.bulb"
+    validations:
+      required: true
+
+  - type: input
+    id: product
+    attributes:
+      label: Product name
+      placeholder: "Philips Zhirui LED Bulb"
+    validations:
+      required: true
+
+  - type: input
+    id: firmware
+    attributes:
+      label: Firmware version
+      description: The `fw_ver` field from `miIO.info`.
+    validations:
+      required: true
+
+  - type: textarea
+    id: info
+    attributes:
+      label: Full miIO.info output
+      description: "**Remove the `token` field**, which some firmware includes. Replace the SSID too."
+      render: json
+    validations:
+      required: true
+
+  - type: textarea
+    id: properties
+    attributes:
+      label: Properties the device answers
+      description: >
+        The result of a `get_prop` call with candidate property names. Names that return
+        `null` are as informative as those that do not, so please include them.
+      render: python
+      placeholder: |
+        >>> t.send("get_prop", ["power", "bright", "cct", "snm", "dv"])
+        ['on', 70, 45, None, None]
+
+  - type: textarea
+    id: features
+    attributes:
+      label: Physical features
+      description: >
+        What the device can actually do: one light or several, brightness, colour
+        temperature, full colour, scenes, any native timer, any physical control.
+
+  - type: checkboxes
+    id: help
+    attributes:
+      label: Can you help?
+      options:
+        - label: I have this device and can test a driver against it
+        - label: I would be willing to write the driver myself with guidance
+
+  - type: checkboxes
+    id: redaction
+    attributes:
+      label: Confirmations
+      options:
+        - label: I have removed the token, MAC address, and network name from the output above
+          required: true

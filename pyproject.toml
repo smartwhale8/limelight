@@ -1,0 +1,115 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "lamplight"
+version = "1.0.0"
+description = "Local control of Xiaomi-ecosystem lights without a vendor application"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { file = "LICENSE" }
+authors = [{ name = "smartwhale8" }]
+keywords = ["miio", "xiaomi", "philips", "iot", "home-automation", "smart-lighting"]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Environment :: Web Environment",
+  "Framework :: FastAPI",
+  "Intended Audience :: End Users/Desktop",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Topic :: Home Automation",
+]
+
+dependencies = [
+  "python-miio>=0.5.12",
+]
+
+[project.optional-dependencies]
+# The HTTP service. The CLI and the drivers work without these.
+server = [
+  "fastapi>=0.110",
+  "uvicorn[standard]>=0.27",
+]
+dev = [
+  "lamplight[server]",
+  "pytest>=8.0",
+  "pytest-cov>=5.0",
+  "httpx>=0.27",
+  "ruff>=0.6",
+]
+
+[project.scripts]
+lamplight = "lamplight.cli:main"
+lamplight-server = "lamplight.server:main"
+
+[project.urls]
+Homepage = "https://github.com/smartwhale8/lamplight"
+Repository = "https://github.com/smartwhale8/lamplight"
+Issues = "https://github.com/smartwhale8/lamplight/issues"
+Documentation = "https://github.com/smartwhale8/lamplight/tree/main/docs"
+Changelog = "https://github.com/smartwhale8/lamplight/blob/main/CHANGELOG.md"
+
+[tool.hatch.build.targets.wheel]
+packages = ["lamplight"]
+
+# ------------------------------------------------------------------------------ tests
+
+[tool.pytest.ini_options]
+minversion = "8.0"
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "-q --strict-markers --strict-config"
+filterwarnings = [
+  "error",
+  # python-miio pulls in older transitive dependencies on some platforms.
+  "default::DeprecationWarning:miio.*",
+  "default::DeprecationWarning:pkg_resources.*",
+]
+
+[tool.coverage.run]
+source = ["lamplight"]
+omit = ["lamplight/web.py"]        # a template string, not logic
+
+[tool.coverage.report]
+exclude_lines = ["pragma: no cover", "if __name__ == .__main__.:", "raise NotImplementedError"]
+
+# ------------------------------------------------------------------------------- lint
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+exclude = ["lamplight/web.py"]     # a large embedded HTML/JS string
+
+[tool.ruff.lint]
+select = [
+  "E", "W",    # pycodestyle
+  "F",         # pyflakes
+  "I",         # import sorting
+  "B",         # bugbear
+  "C4",        # comprehensions
+  "UP",        # pyupgrade
+  "SIM",       # simplify
+  "RUF",       # ruff-specific
+  "D",         # docstrings
+]
+ignore = [
+  "D102",      # methods; the class docstring and type signature carry the meaning
+  "D103",      # small functions and route handlers, which have FastAPI summaries
+  "D105",      # magic methods
+  "D107",      # __init__; the class docstring covers construction
+  "D203",      # incompatible with D211
+  "D213",      # incompatible with D212
+  "E501",      # line length is handled by the formatter
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["D100", "D103"]       # test names are the documentation
+"tools/*" = ["D103"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "pep257"

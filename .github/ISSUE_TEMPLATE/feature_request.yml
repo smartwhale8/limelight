@@ -1,0 +1,64 @@
+name: Feature request
+description: Suggest a capability or change
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please check [docs/ROADMAP.md](https://github.com/smartwhale8/lamplight/blob/main/docs/ROADMAP.md)
+        first. It lists planned work and, in the final section, things that are explicitly
+        not planned along with the reasoning.
+
+        For a request to support another device, use the device support template instead.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What are you trying to do
+      description: The situation, rather than the solution you have in mind.
+      placeholder: >
+        I want the lamp to come on gradually at sunrise, which moves through the year, so a
+        fixed clock time does not work.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What you propose
+      description: Optional. If you have a shape in mind, describe it.
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Which part of the project
+      options:
+        - Device drivers or protocol
+        - HTTP API
+        - Web interface
+        - Command line
+        - Scheduling and timed behaviour
+        - Packaging or deployment
+        - Documentation
+        - Not sure
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: contract
+    attributes:
+      label: Does this change the HTTP API
+      description: >
+        Adding a field or endpoint is backwards-compatible. Removing or repurposing one is
+        not, and needs discussion before code. See docs/API.md.
+      options:
+        - label: This would add to the API without changing existing behaviour
+        - label: This would change or remove existing API behaviour
+        - label: This does not touch the API
+
+  - type: checkboxes
+    id: help
+    attributes:
+      label: Can you help?
+      options:
+        - label: I would be willing to open a pull request for this
