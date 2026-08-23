@@ -11,7 +11,7 @@ build-backend = "hatchling.build"
 # remain `limelight`; only the string after `pip install` differs.
 name = "limelight-miio"
 version = "2.1.0"
-description = "Local control of Xiaomi-ecosystem lights without a vendor application"
+description = "Local control of Xiaomi-ecosystem smart lights over the miIO protocol"
 readme = "README.md"
 requires-python = ">=3.11"
 license = "MIT"
