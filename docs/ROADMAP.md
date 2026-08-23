@@ -11,8 +11,17 @@ generated today keeps working, per the compatibility promise in [API.md](API.md)
 
 ### Android client
 
-A native client is the next substantial piece. The API was versioned and given capability
-negotiation specifically so that a compiled client stays valid.
+A first version exists in [`../android/`](../android/). It speaks miIO **directly to the
+lamp** rather than going through this service, so it works with nothing else running.
+Discovery, connection and every device operation are implemented; sunrise ramps and
+schedules are not, because they need a host awake at the scheduled moment.
+
+Its codec was verified by translating the Kotlin into Python and comparing bytes with
+`python-miio`. That comparison caught a real defect, a missing null terminator on the JSON
+payload, which would have failed against the firmware while looking correct.
+
+The notes below remain relevant to a client that talks to this service instead, which is
+the route to schedules and ramps on a phone.
 
 What already exists for it:
 

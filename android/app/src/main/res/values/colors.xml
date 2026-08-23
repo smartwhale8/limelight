@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Only used for the launch window and the adaptive icon. Every colour the app
+         actually draws is defined in ui/theme/Theme.kt. -->
+    <color name="window_background">#F6F7F9</color>
+    <color name="ic_launcher_background">#14181D</color>
+</resources>

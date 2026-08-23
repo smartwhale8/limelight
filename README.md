@@ -35,6 +35,7 @@ every command is a UDP datagram sent from your machine to the device.
 |  | |
 |---|---|
 | **Web interface** | Any browser, including a phone on the same network. Dark and light themes. |
+| **Android app** | Standalone client in [`android/`](android/), talking to the lamp directly over miIO with no server running. |
 | **JSON API** | Versioned at `/api/v1`, with an OpenAPI schema for generating clients. |
 | **Command line** | Every function scriptable, suitable for cron or other automation. |
 | **Sunrise wake-up** | Gradual brightness ramp over any duration. |
@@ -536,7 +537,8 @@ Each script prints what it will do before doing it, and each has a matching
 | [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) | Setup, testing, debugging, releasing |
 | [docs/DEVICES.md](docs/DEVICES.md) | Adding support for another device |
 | [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) | Symptoms, causes, fixes |
-| [docs/ROADMAP.md](docs/ROADMAP.md) | Planned work, including the Android client |
+| [docs/ROADMAP.md](docs/ROADMAP.md) | Planned work |
+| [android/README.md](android/README.md) | The Android client: build, design, and how its codec was verified |
 
 ## Contributing
 

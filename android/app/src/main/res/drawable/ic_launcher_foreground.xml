@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- A desk lamp, drawn to sit inside the 72dp safe zone of a 108dp adaptive icon. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Shade -->
+    <path
+        android:fillColor="#E0A44A"
+        android:pathData="M54,30 L72,58 L36,58 Z" />
+    <!-- Light pooling below the shade -->
+    <path
+        android:fillColor="#E0A44A"
+        android:fillAlpha="0.35"
+        android:pathData="M36,60 L72,60 L82,78 L26,78 Z" />
+    <!-- Stem -->
+    <path
+        android:fillColor="#E0A44A"
+        android:pathData="M52,26 L56,26 L56,32 L52,32 Z" />
+    <!-- Base -->
+    <path
+        android:fillColor="#E0A44A"
+        android:pathData="M40,80 L68,80 A2,2 0 0,1 68,84 L40,84 A2,2 0 0,1 40,80 Z" />
+</vector>

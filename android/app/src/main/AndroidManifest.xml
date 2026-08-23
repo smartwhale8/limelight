@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!--
+        The app speaks miIO directly to the lamp over UDP on the local network.
+
+        INTERNET is required for any socket, including a purely local one.
+        ACCESS_NETWORK_STATE lets us read the active network's IPv4 address, which is how
+        the subnet to sweep during discovery is derived.
+        CHANGE_WIFI_MULTICAST_STATE allows a multicast lock while scanning. Replies from
+        the lamp are unicast, so this is belt and braces, but some devices drop broadcast
+        traffic aggressively without it.
+
+        Note that no network security configuration is needed. Android's cleartext
+        restrictions apply to HTTP, and this app sends raw UDP datagrams.
+    -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" />
+
+    <application
+        android:allowBackup="true"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.Lamplight">
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:label="@string/app_name"
+            android:theme="@style/Theme.Lamplight">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+
+</manifest>

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    The saved device token is a credential for the lamp. It is excluded from backup so it
+    does not travel off the device in a cloud backup.
+-->
+<full-backup-content>
+    <exclude domain="sharedpref" path="lamplight.xml" />
+</full-backup-content>

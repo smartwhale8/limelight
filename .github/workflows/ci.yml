@@ -75,6 +75,30 @@ jobs:
           name: dist
           path: dist/
 
+  android:
+    name: Build the Android client
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      # GitHub's Ubuntu runners ship the Android SDK, so the Kotlin client is compiled
+      # here. That matters: the miIO codec cannot be exercised against hardware in CI, and
+      # this is what proves the app at least builds.
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.9"
+      - name: Assemble debug APK
+        working-directory: android
+        run: gradle --no-daemon assembleDebug
+      - uses: actions/upload-artifact@v4
+        with:
+          name: lamplight-debug-apk
+          path: android/app/build/outputs/apk/debug/*.apk
+          if-no-files-found: warn
+
   secrets:
     name: Check for committed secrets
     runs-on: ubuntu-latest

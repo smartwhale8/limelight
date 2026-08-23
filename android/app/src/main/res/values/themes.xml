@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+        A pure Compose application, so this theme only styles the window before the first
+        frame is drawn. The platform Material theme is used rather than a Material
+        Components one, which keeps the app free of the extra library.
+    -->
+    <style name="Theme.Lamplight" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/window_background</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+    </style>
+</resources>
