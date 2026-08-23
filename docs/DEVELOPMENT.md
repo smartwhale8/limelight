@@ -27,11 +27,42 @@ Python 3.11 or newer. The floor is 3.11 because the code uses `enum.StrEnum` and
 git clone https://github.com/smartwhale8/lamplight.git
 cd lamplight
 python -m venv .venv && source .venv/bin/activate
-pip install -e ".[dev]"
+pip install -e ".[dev]" -c constraints.txt
 ```
 
 `[dev]` brings the server extras, `pytest`, `pytest-cov`, `ruff`, and an HTTP client for
 the test client.
+
+### Why `-c constraints.txt`
+
+`pyproject.toml` declares **abstract ranges**, which is what makes the package installable
+alongside others. `constraints.txt` records the **concrete resolution** we build and test
+against, so an install is reproducible and an upstream release cannot turn CI red for
+reasons unrelated to a change here.
+
+That is not hypothetical. An unpinned `starlette` release began requiring `httpx2`, and a
+clean install failed at test collection while a local environment that happened to have
+`httpx2` installed passed.
+
+Regenerate it deliberately, never as a side effect of something else:
+
+```bash
+python -m venv /tmp/resolve
+/tmp/resolve/bin/pip install -e ".[dev]"
+/tmp/resolve/bin/pip freeze --exclude-editable > constraints.txt   # keep the header comment
+rm -rf /tmp/resolve
+```
+
+### On the `python-miio` bound
+
+`python-miio` is capped below `0.6`. It is a `0.x` project, so under semantic versioning the
+**minor** version carries breaking changes, and `0.6` is a large refactor adding MIoT support
+and an introspectable API.
+
+Our surface is deliberately tiny: two imports and three calls, all inside
+`lamplight/drivers/miio_transport.py`. `tests/test_dependency_contract.py` asserts that
+surface and also enforces that no other module imports `miio`, so a future migration has one
+file to change and fails loudly rather than at runtime against a device.
 
 Verify:
 
@@ -147,6 +178,7 @@ pytest -x -vv                       # stop at the first failure, verbose
 
 | File | Covers |
 |---|---|
+| `test_dependency_contract.py` | The parts of python-miio we rely on, so an upgrade fails loudly |
 | `test_drivers.py` | Driver behaviour, capabilities, and quirk compensation |
 | `test_transport.py` | Wire protocol parsing, against a real loopback UDP socket |
 | `test_scheduler.py` | Ramp arithmetic, cancellation, due-time evaluation |
@@ -383,6 +415,11 @@ Versions follow [semantic versioning](https://semver.org/). The API contract in
 5. Commit, tag `vX.Y.Z`, and push the tag.
 6. `python -m build` if publishing a distribution.
 
+Pushing a `v*` tag triggers `.github/workflows/release.yml`, which builds the Android APK
+and the Python distribution and attaches both to a GitHub Release. The APK is deliberately
+not committed to the repository: at roughly 16 MB per build it would grow the history
+without bound.
+
 ### What each number means here
 
 | Change | Bump |
@@ -391,6 +428,7 @@ Versions follow [semantic versioning](https://semver.org/). The API contract in
 | A bug fix, or a documentation change | Patch |
 | Removing or repurposing an API field, or dropping `/api` | Major |
 | Raising the Python floor | Minor, or major if it strands a supported platform |
+| Raising the `python-miio` cap to 0.6 | Minor at least; verify against hardware first |
 
 ---
 

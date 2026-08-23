@@ -24,7 +24,7 @@ jobs:
           python-version: "3.12"
           cache: pip
       - name: Install ruff
-        run: pip install ruff
+        run: pip install ruff -c constraints.txt
       - name: Lint
         run: ruff check --output-format=github .
 
@@ -34,7 +34,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.11", "3.12", "3.13"]
+        # The declared floor and the version used for development. The versions between
+        # them sit inside a tested range and have never diverged from it, so testing them
+        # costs runner time without buying coverage.
+        python-version: ["3.11", "3.14"]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -42,13 +45,15 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: pip
       - name: Install
-        run: pip install -e ".[dev]"
+        # -c pins the whole tree to the versions recorded in constraints.txt, so a red
+        # build means a change here broke something, not that a dependency shipped.
+        run: pip install -e ".[dev]" -c constraints.txt
       - name: Test
         # The whole suite runs without hardware: device access goes through an
         # in-memory fake, and the transport tests use a loopback UDP responder.
         run: pytest -q --cov --cov-report=term-missing --cov-report=xml
       - name: Upload coverage
-        if: matrix.python-version == '3.12'
+        if: matrix.python-version == '3.14'
         uses: actions/upload-artifact@v4
         with:
           name: coverage
@@ -98,6 +103,8 @@ jobs:
           name: lamplight-debug-apk
           path: android/app/build/outputs/apk/debug/*.apk
           if-no-files-found: warn
+          # Builds between releases stay fetchable for as long as GitHub allows.
+          retention-days: 90
 
   secrets:
     name: Check for committed secrets

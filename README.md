@@ -35,7 +35,7 @@ every command is a UDP datagram sent from your machine to the device.
 |  | |
 |---|---|
 | **Web interface** | Any browser, including a phone on the same network. Dark and light themes. |
-| **Android app** | Standalone client in [`android/`](android/), talking to the lamp directly over miIO with no server running. |
+| **Android app** | Standalone client in [`android/`](android/), talking to the lamp directly over miIO with no server running. Download the APK from [Releases](https://github.com/smartwhale8/lamplight/releases). |
 | **JSON API** | Versioned at `/api/v1`, with an OpenAPI schema for generating clients. |
 | **Command line** | Every function scriptable, suitable for cron or other automation. |
 | **Sunrise wake-up** | Gradual brightness ramp over any duration. |
@@ -73,23 +73,21 @@ Adding another miIO light is a new file in `lamplight/drivers/`. See
 
 ## How it works
 
-This section explains the mechanism from the network layer up. If you only want to use the
-software, skip to [Install](#install).
+The concepts, in the order they matter. Byte-level detail lives in
+[docs/PROTOCOL.md](docs/PROTOCOL.md); this is the orientation.
 
 ### What miIO is
 
-**miIO** is the local control protocol spoken by devices in Xiaomi's smart home ecosystem.
-The name is a contraction of *Mi* and *IO*. It is a proprietary protocol that Xiaomi has
-never published; everything known about it publicly comes from reverse engineering, and
-[python-miio](https://github.com/rytilahti/python-miio) is the reference implementation.
+**miIO** is the local control protocol spoken by devices in Xiaomi's smart home ecosystem,
+its name a contraction of *Mi* and *IO*. Xiaomi has never published a specification, so
+everything known about it publicly comes from reverse engineering.
 
-Two things about it are worth understanding before anything else.
+Two properties explain things that otherwise look odd here.
 
-**The brand on the box does not determine the protocol.** Xiaomi operates an ecosystem
+**The brand on the box does not determine the protocol.** Xiaomi runs an ecosystem
 programme in which partner manufacturers build hardware that registers with the Mi Home
-application. A device from that programme speaks miIO regardless of whose logo it carries,
-which is why a Philips-branded lamp is addressed by the same protocol as a Xiaomi air
-purifier. Every such device has a model identifier in `vendor.category.model` form:
+application, so a Philips-branded lamp is addressed exactly like a Xiaomi air purifier.
+Each device carries a model identifier of the form `vendor.category.model`:
 
 ```
 philips.light.sread1
@@ -99,268 +97,113 @@ philips.light.sread1
    +---------------- vendor within the ecosystem programme
 ```
 
-That identifier, not the brand name, is what selects a driver in this project.
+That identifier, not the brand, selects a driver.
 
-**There are two generations of the protocol**, and they differ in how properties are
-addressed:
+**There are two generations.** Legacy miIO addresses properties by string name through
+`get_prop`; MIoT-Spec-V2 addresses them numerically through `get_properties` with a service
+and property id. Both use the same transport, so the difference is purely a driver concern.
+This lamp is a legacy device.
 
-| | Legacy miIO | MIoT-Spec-V2 |
-|---|---|---|
-| Reading | `get_prop` with string property names | `get_properties` with numeric `siid` and `piid` |
-| Writing | Device-specific methods such as `set_bright` | `set_properties`, and `action` for commands |
-| Discoverability | None. Property names must be learned per device. | Self-describing, published as a URN specification |
-| Used by | Older devices, including this lamp | Newer devices |
+A cloud path over HTTPS also exists for devices bound to a Xiaomi account. lamplight never
+uses it, and provisions with `uid=0` specifically to avoid creating that binding.
 
-Xiaomi intends MIoT-Spec-V2 to replace the legacy profile. **Both ride the same encrypted
-UDP transport described below**, so the transport layer in this project serves either, and
-only the driver differs. This lamp is a legacy device and uses `get_prop`.
+### Access points, and the two modes a device can be in
 
-Separately, these devices also talk to Xiaomi's cloud over HTTPS when bound to an account.
-lamplight never uses that path, and never binds an account.
+An **access point** is the radio other devices associate with to form a Wi-Fi network. Your
+router runs one; its network name is the SSID you pick from a list.
 
-### Wi-Fi access points, and the two modes a device can be in
+**Infrastructure mode** is the normal state: the device joins your router's access point and
+DHCP gives it an address on your subnet, such as `192.168.1.42`.
 
-An **access point** is the radio that other devices associate with to form a Wi-Fi
-network. Your router runs one; its network name is the SSID you select from a list.
-
-A smart device can be in either of two modes:
-
-**Infrastructure mode** is the normal state. The device joins your router's access point
-as a client. Your router's DHCP server assigns it an address on your subnet, such as
-`192.168.1.42`, and from then on any machine on that network can address it directly.
-
-**SoftAP mode**, or "software access point", is the setup state. A device with no stored
-Wi-Fi credentials cannot join a network, so it runs an access point *of its own* and waits
-for you to connect to it. This is how it can be configured before it has any network
-access. Its SSID encodes what it is:
+**SoftAP mode** is the setup state. A device with no stored Wi-Fi credentials cannot join
+anything, so it runs an access point *of its own* and waits for you to connect to it. The
+SSID encodes what it is, and `_miap` marks it as a miIO setup network:
 
 ```
 philips-light-sread1_miapXXXX
-     |          |        |
-     |          |        +-- per-unit discriminator
-     |          +----------- model: philips.light.sread1
-     +---------------------- vendor
 ```
 
-`_miap` marks a Xiaomi miIO setup access point. An SSID of that shape is a device waiting
-to be adopted.
+Two consequences: your machine loses internet while joined to it, and **this device's setup
+network advertises no default gateway**, so code that derives the device address from the
+routing table finds nothing. It answers on `192.168.4.1`. That detail defeated the first
+adoption attempt and is why [docs/ADOPTION.md](docs/ADOPTION.md) exists.
 
-Two practical consequences of SoftAP mode:
+### Addressing: the device id matters more than the IP
 
-1. **Your machine loses internet while joined to it.** The device is not a router; it
-   provides no route to anywhere else.
-2. **This device's SoftAP serves DHCP on `192.168.4.0/24`, hands the client `192.168.4.2`,
-   answers on `192.168.4.1`, and advertises no default gateway.** Code that derives the
-   device's address from the routing table finds nothing and concludes the device is dead.
-   Probe `192.168.4.1` directly.
+Addresses come from DHCP and move. Every miIO device also has a **device id**, a 32-bit
+integer fixed for the life of the hardware. lamplight stores both, and when commands start
+failing it re-runs discovery, matches on the device id, and updates the address by itself.
 
-SoftAP mode is advertised for a limited window after a reset and then stops, so the device
-does not broadcast an open network indefinitely.
+### Transport: why UDP means retries
 
-### Addressing: why the device id matters more than the IP
-
-Addresses come from DHCP and change. Every miIO device also has a **device id**, a 32-bit
-integer fixed for the life of the hardware.
-
-lamplight stores both. When a command fails repeatedly it re-runs discovery, matches on the
-device id, and updates the address. This is why `lamplight adopt` records the device id and
-why a lamp that moves from `.42` to `.99` keeps working without intervention.
-
-### The protocol: miIO over UDP
-
-Commands travel as **UDP datagrams to port 54321**. UDP is connectionless: each datagram is
-sent independently, with no handshake, no ordering guarantee, and no delivery
-acknowledgement. That has one consequence worth internalising:
+Commands are **UDP datagrams to port 54321**. UDP is connectionless, with no delivery
+acknowledgement, which has one consequence worth internalising:
 
 > A lost datagram is indistinguishable from a dead device.
 
-So every command is retried with increasing backoff before being reported as a failure, and
-a `WARNING` in the log about rediscovery usually means one datagram was dropped, not that
-anything is broken.
-
-Every datagram, in both directions, opens with a 32-byte header:
-
-```
- offset  size  field
- ------  ----  -------------------------------------------------------------
-      0     2  magic, always 0x2131
-      2     2  total packet length, header included, big-endian
-      4     4  unknown; zero in practice
-      8     4  device id, big-endian
-     12     4  uptime stamp, seconds since the device booted
-     16    16  MD5 checksum, or the token during a handshake
-     32     n  encrypted payload; absent on a handshake
-```
+Every command is therefore retried with increasing backoff before being called a failure.
+A rediscovery warning in the log usually means one datagram was dropped, not that anything
+is broken.
 
 ### Authentication: the token
 
 Access is controlled by a single **token**: 16 bytes, written as 32 hexadecimal characters.
-There is no username, no password, and no per-command permission. Possession of the token
-is complete control of the device.
+There is no username, no password, and no per-command permission. Possession of the token is
+complete control of the device.
 
-The token is not transmitted with each command. It is the seed for the encryption:
-
-```
-key = md5(token)                              # 16 bytes
-iv  = md5(key + token)                        # 16 bytes
-payload = AES-128-CBC(key, iv, json_bytes)    # PKCS#7 padding
-```
-
-The checksum at offset 16 is computed over the packet with the token substituted into that
-field:
-
-```
-checksum = md5(header[0:16] + token + encrypted_payload)
-```
-
-A device that cannot decrypt a payload simply does not answer, so a wrong token presents
-as an unreachable device rather than as an authentication error.
+The token is never transmitted. It seeds the encryption, with the key derived as
+`md5(token)` and the IV as `md5(key + token)`, and the payload encrypted with AES-128-CBC.
+A device that cannot decrypt a request simply does not answer, so a **wrong token presents
+as an unreachable device** rather than as an authentication error.
 
 ### The handshake, and how a token is obtained
 
-Before any encrypted exchange, a client sends a **hello**: a 32-byte packet with no
-payload and every byte of the checksum field set to `0xff`.
+Before any encrypted exchange, a client sends a 32-byte **hello** with no payload. No
+credential is involved, so any device on the subnet answers with its device id, and firmware
+that discloses its token includes that too.
 
-```
-21 31 00 20 ff ff ff ff ff ff ff ff ff ff ff ff
-ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff
-```
-
-No encryption is involved, so **no credential is needed to send it**. The reply carries the
-device id and uptime stamp. Bytes 16 to 32 hold one of:
-
-| Value | Meaning |
-|---|---|
-| 16 bytes of data | The firmware is disclosing its token in plaintext |
-| `ff` × 16 | Withheld |
-| `00` × 16 | Withheld |
-
-This is how a token is obtained without vendor software. Two facts govern whether it works:
-
-- Firmware **discloses** its token when the device has never been bound to a vendor cloud
-  account. On the model above, disclosure happens both in SoftAP mode and after
-  provisioning, and `miIO.info` also returns the token in its response.
-- **Binding** a device to a vendor account regenerates the token. Provisioning and binding
-  are separate operations, which is why lamplight provisions with `uid=0` and never binds.
-
-The handshake also serves as discovery. Sending a hello to every address on a `/24` and
-collecting the replies enumerates the miIO devices on a network, with no credentials.
-
-The uptime stamp matters for a long-lived client: a request whose stamp is far from the
-device's own is ignored, so the handshake is repeated periodically to stay synchronised.
+This is both the discovery mechanism and how a token is obtained without vendor software.
+Whether it works depends on binding: a device that has never been registered to a Xiaomi
+account discloses its token, and binding one regenerates it.
 
 ### Query and response
 
-The payload is JSON-RPC. A read requests several properties in one call and receives their
-values in the order asked:
+Payloads are JSON-RPC. A read asks for several properties at once and gets them back in
+order:
 
 ```jsonc
 // query
-{"id": 1, "method": "get_prop",
- "params": ["power", "bright", "eyecare", "dvalue"]}
-
+{"id": 1, "method": "get_prop", "params": ["power", "bright", "eyecare"]}
 // response
-{"result": ["on", 70, "off", 0], "id": 1}
+{"result": ["on", 70, "off"], "id": 1}
 ```
 
-Reading everything in one datagram rather than one per property is not an optimisation
-detail. The device is a single-threaded microcontroller on a connectionless transport, and
-nine separate reads will drop datagrams.
+A write names a method and its arguments, and answers `{"result": ["ok"]}`.
 
-A write names a method and its arguments:
+Reading everything in one datagram is not a nicety. The device is a single-threaded
+microcontroller on a connectionless transport, and one request per property drops datagrams.
 
-```jsonc
-// query
-{"id": 2, "method": "set_bright", "params": [45]}
-
-// response
-{"result": ["ok"], "id": 2}
-```
-
-Rules the transport enforces:
-
-- **`id` must increase.** A reused id is ignored.
-- **Errors arrive as** `{"error": {"code": -5001, "message": "..."}}`.
-- **Not every reply is a list.** `miIO.config_router` answers with a bare integer on this
-  firmware, which is why `python-miio`'s `Device.configure_wifi` raises
-  `TypeError: 'int' object is not subscriptable` *after the device has already acted*.
-
-#### The command set for `philips.light.sread1`
-
-Readable properties, all available from one `get_prop`:
-
-| Property | Type | Meaning |
-|---|---|---|
-| `power` | `"on"` / `"off"` | Main light |
-| `bright` | 1–100 | Main brightness |
-| `notifystatus` | `"on"` / `"off"` | Eye-fatigue reminder |
-| `ambstatus` | `"on"` / `"off"` | Ambient light |
-| `ambvalue` | 1–100 | Ambient brightness |
-| `eyecare` | `"on"` / `"off"` | Eyecare mode |
-| `scene_num` | 1–4 | Fixed scene |
-| `bls` | `"on"` / `"off"` | Smart night light |
-| `dvalue` | 0–n | Sleep timer, minutes remaining, 0 when unset |
-
-Writable methods:
-
-| Function | Method | Argument |
-|---|---|---|
-| Power | `set_power` | `["on"]` / `["off"]` |
-| Main brightness | `set_bright` | `[1..100]` |
-| Eyecare mode | `set_eyecare` | `["on"]` / `["off"]` |
-| Ambient light | `enable_amb` | `["on"]` / `["off"]` |
-| Ambient brightness | `set_amb_bright` | `[1..100]` |
-| Fixed scene | `set_user_scene` | `[1..4]` |
-| Sleep timer | `delay_off` | `[minutes]`, 0 cancels |
-| Smart night light | `enable_bl` | `["on"]` / `["off"]` |
-| Fatigue reminder | `set_notifyuser` | `["on"]` / `["off"]` |
-
-Device-level methods:
-
-| Method | Argument | Purpose |
-|---|---|---|
-| `miIO.info` | `[]` | Model, firmware, MAC, network state, and on this firmware the token |
-| `miIO.config_router` | `{"ssid","passwd","uid"}` | Provide Wi-Fi credentials |
-
-#### Two firmware defects
-
-Measured, undocumented, and compensated for in the driver:
-
-| Command | Undocumented side effect |
-|---|---|
-| `set_eyecare` | Resets `bright`. Observed 25 becoming 53. |
-| `delay_off` | Resets `bright`. Observed 53 becoming 70. |
-
-A user setting a sleep timer has not asked for a brightness change, so the driver reads
-brightness first and restores it if the firmware moved it.
+The full property list and command surface for this lamp, including **two undocumented
+firmware defects where `set_eyecare` and `delay_off` each reset brightness**, are in
+[docs/PROTOCOL.md](docs/PROTOCOL.md).
 
 ### Capabilities: how clients avoid hard-coding a feature set
 
-Devices differ. Rather than every client knowing which features which model has, each
-driver declares a capability set, and the API publishes it:
+Each driver declares what its device can do, and both the API and the Android app render
+controls from that list rather than from assumptions:
 
 ```console
 $ curl -s http://localhost:8765/api/v1/device | jq '.capabilities'
-[
-  "ambient", "ambient_brightness", "brightness", "eyecare",
-  "night_light", "power", "reminder", "scenes", "sleep_timer"
-]
+["ambient","ambient_brightness","brightness","eyecare",
+ "night_light","power","reminder","scenes","sleep_timer"]
 ```
 
-Three things follow from that list:
+Three things follow. Clients build their interface from the list. Unsupported operations
+return a clean HTTP 400 rather than a protocol error. And in `GET /api/v1/state`, only `on`
+is guaranteed, so an absent key means the device has no such feature.
 
-1. **Clients build their interface from it.** The web interface tags each control with a
-   `data-cap` attribute and hides any whose capability is absent.
-2. **Unsupported operations fail cleanly.** Calling `/api/v1/sleep_timer` on a device
-   without that capability returns HTTP 400 with an explanatory message, not a protocol
-   error.
-3. **Unsupported state fields are omitted entirely.** In `GET /api/v1/state`, only `on` is
-   guaranteed. An absent key means the device has no such feature, which is how a client
-   distinguishes "off" from "not present".
-
-Capability strings are public API. New ones may be added, and clients are required to
-ignore values they do not recognise, so an older client keeps working against a newer
-device.
+Capability strings are public API, and clients must ignore values they do not recognise, so
+an older client keeps working against a newer device.
 
 ### Putting it together
 
@@ -389,10 +232,11 @@ sequenceDiagram
     S->>C: {"ok": true, "result": ["ok"]}
 ```
 
-Full protocol reference in [docs/PROTOCOL.md](docs/PROTOCOL.md); the HTTP contract in
-[docs/API.md](docs/API.md).
+The Android app removes the middle two participants: it speaks miIO to the lamp directly.
 
----
+Further reading: [docs/PROTOCOL.md](docs/PROTOCOL.md) for the wire format,
+[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for how the code is layered, and
+[docs/API.md](docs/API.md) for the HTTP contract.
 
 ## Install
 
@@ -402,8 +246,12 @@ Python 3.11 or newer.
 git clone https://github.com/smartwhale8/lamplight.git
 cd lamplight
 python -m venv .venv && source .venv/bin/activate
-pip install -e ".[server]"
+pip install -e ".[server]" -c constraints.txt
 ```
+
+`constraints.txt` pins the exact versions this project is built and tested against, so the
+install is reproducible. `pyproject.toml` declares looser ranges, so lamplight can still be
+installed alongside other packages that need different versions.
 
 ## Adopting a device
 

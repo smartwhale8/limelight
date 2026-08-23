@@ -22,11 +22,20 @@ classifiers = [
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
   "Topic :: Home Automation",
 ]
 
 dependencies = [
-  "python-miio>=0.5.12",
+  # An abstract range, so the package stays installable alongside others. The concrete
+  # versions we build and test against are pinned in constraints.txt.
+  #
+  # Capped below 0.6 deliberately: python-miio is a 0.x project, so under semantic
+  # versioning the MINOR version carries breaking changes, and 0.6 is a large refactor
+  # adding MIoT support and an introspectable API. 0.5.12 is both the current stable
+  # release and the last of the 0.5 line, so this admits only a future 0.5.x patch.
+  # Moving to 0.6 should be a deliberate migration, never a silent one.
+  "python-miio>=0.5.12,<0.6",
 ]
 
 [project.optional-dependencies]

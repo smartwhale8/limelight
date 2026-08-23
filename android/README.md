@@ -18,6 +18,17 @@ no laptop, no cloud service, no account.
 Controls are rendered from the device's capability set, so a different model shows a
 different set of controls with no code change.
 
+## Install it
+
+Download the APK from [Releases](https://github.com/smartwhale8/lamplight/releases) and
+sideload it. Your browser or file manager will ask for permission to install once.
+
+It is a debug build, signed with the standard debug key. That is fine for sideloading and
+means it cannot go to Play without resigning.
+
+Every push also produces an APK as a workflow artifact under the Actions tab, which is
+useful between releases but expires after 90 days and needs a GitHub login.
+
 ## Build it
 
 Requires **Android Studio** with a JDK 17 toolchain.

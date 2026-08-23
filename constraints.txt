@@ -1,0 +1,74 @@
+# Exact versions this project is built and tested against.
+#
+# pyproject.toml declares abstract ranges, so lamplight can be installed alongside
+# other packages. This file records the concrete resolution, so a build is
+# reproducible and an upstream release cannot turn CI red for reasons unrelated to
+# a change here. That is not hypothetical: an unpinned starlette release began
+# requiring httpx2 and broke a clean install.
+#
+# Use it:
+#     pip install -e ".[dev]" -c constraints.txt
+#
+# Regenerate it deliberately, never as a side effect:
+#     python -m venv /tmp/resolve && /tmp/resolve/bin/pip install -e '.[dev]'
+#     /tmp/resolve/bin/pip freeze --exclude-editable > constraints.txt
+#
+# Resolved on Python 3.14 on Darwin. Platform-specific entries are
+# harmless: a constraint only applies to a package that is actually installed.
+#
+android_backup==0.2.0
+annotated-doc==0.0.5
+annotated-types==0.8.0
+anyio==4.14.2
+appdirs==1.4.4
+attrs==26.1.0
+certifi==2026.7.22
+cffi==2.1.1
+charset-normalizer==3.5.1
+click==8.4.2
+construct==2.10.70
+coverage==7.15.4
+croniter==6.2.4
+cryptography==50.0.0
+defusedxml==0.7.1
+fastapi==0.141.1
+h11==0.16.0
+httpcore==1.0.9
+httpcore2==2.12.0
+httptools==0.8.0
+httpx==0.28.1
+httpx2==2.12.0
+idna==3.19
+ifaddr==0.2.0
+iniconfig==2.3.0
+micloud==0.6
+netifaces==0.11.0
+packaging==26.3
+pluggy==1.6.0
+pycparser==3.0
+pycryptodome==3.23.0
+pydantic==2.13.4
+pydantic_core==2.46.4
+Pygments==2.21.0
+pytest==9.1.1
+pytest-cov==7.1.0
+python-dateutil==2.9.0.post0
+python-dotenv==1.2.3
+python-miio==0.5.12
+pytz==2026.3.post1
+PyYAML==6.0.3
+requests==2.34.2
+ruff==0.16.4
+six==1.17.0
+starlette==1.6.0
+tqdm==4.70.0
+truststore==0.10.4
+typing-inspection==0.4.4
+typing_extensions==4.16.0
+tzlocal==5.4.4
+urllib3==2.7.0
+uvicorn==0.52.4
+uvloop==0.22.1
+watchfiles==1.2.0
+websockets==17.0.1
+zeroconf==0.150.0
