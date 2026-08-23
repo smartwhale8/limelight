@@ -134,7 +134,7 @@ is absent.
 ### A phone cannot reach the service
 
 1. **Same network?** Phones switch to mobile data readily. Confirm the Wi-Fi network.
-2. **Right address?** Use the machine's LAN address, not `localhost`. `./run.sh` prints it.
+2. **Right address?** Use the machine's LAN address rather than `localhost`. The service prints both at startup.
 3. **Bound to loopback?** The default host is `0.0.0.0`. Check for `--host 127.0.0.1`.
 4. **Host firewall?** macOS and Linux both may prompt or silently block inbound
    connections.

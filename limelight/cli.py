@@ -273,7 +273,10 @@ def cmd_serve(args, cfg: Config) -> int:
     """Start the HTTP service. Imported lazily so the CLI does not need FastAPI."""
     import uvicorn
 
-    from .server import build_default_app
+    from .server import build_default_app, print_urls
+
+    cfg_key = cfg.server.api_key
+    print_urls(args.host, args.port, cfg_key)
     uvicorn.run(build_default_app(), host=args.host, port=args.port,
                 log_level=args.log_level)
     return 0

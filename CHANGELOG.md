@@ -8,7 +8,20 @@ contract in [docs/API.md](docs/API.md) is what the major version protects.
 
 ## [Unreleased]
 
-Nothing yet.
+### Removed
+
+- `run.sh`. It duplicated `limelight serve`, which the package already installs, and was a
+  shell script at the root of a Python project that only worked on macOS and Linux.
+
+### Changed
+
+- The one thing `run.sh` did that the service did not, printing the address a phone can
+  reach, now lives in the service, so `limelight serve`, `limelight-server` and
+  `python -m limelight.server` all print it. Binding to a single interface now says so
+  instead of printing a LAN URL that would not work. `--quiet` suppresses the banner.
+- The LAN address is now found by opening a UDP socket towards a non-routed address and
+  reading the local end, which lets the kernel pick the outbound interface. The previous
+  approach guessed at interface names, which differ across platforms.
 
 ## [2.0.1] - 2026-08-23
 

@@ -89,7 +89,6 @@ include = [
   "/docs",
   "/packaging",
   "/constraints.txt",
-  "/run.sh",
   "/README.md",
   "/LICENSE",
   "/CHANGELOG.md",

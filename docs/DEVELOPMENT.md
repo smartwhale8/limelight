@@ -92,7 +92,7 @@ should not have to install a web framework.
 limelight serve                     # reads host and port from configuration
 limelight serve --port 9000
 python -m limelight.server          # equivalent
-./run.sh                            # prints the phone-reachable URL too
+limelight serve --quiet             # without the startup URLs
 ```
 
 Then <http://localhost:8765>, plus `/docs` for interactive API documentation and

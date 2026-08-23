@@ -1,6 +1,6 @@
 """HTTP service and web interface.
 
-Run with ``limelight serve``, ``python -m limelight.server``, or ``./run.sh``.
+Run with ``limelight serve`` or ``python -m limelight.server``.
 
 API versioning
 --------------
@@ -398,6 +398,41 @@ def __getattr__(name: str):
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 
+def _lan_address() -> str:
+    """Best guess at this machine's address on the local network.
+
+    Opening a UDP socket towards a public address makes the kernel choose the outbound
+    interface without sending anything, which is more reliable than reading interface
+    names that differ across platforms.
+    """
+    import socket
+
+    try:
+        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
+            s.connect(("192.0.2.1", 1))          # TEST-NET-1, never routed
+            return s.getsockname()[0]
+    except OSError:
+        return "127.0.0.1"
+
+
+def print_urls(host: str, port: int, api_key: str) -> None:
+    """Show where the interface can be reached, including from a phone.
+
+    The address that matters for a phone is the LAN one, and ``localhost`` in a log line
+    is the single most common reason someone concludes the service is unreachable.
+    """
+    print(f"limelight, port {port}")
+    print(f"  this machine:  http://localhost:{port}")
+    if host in ("0.0.0.0", "::"):
+        print(f"  same network:  http://{_lan_address()}:{port}")
+    else:
+        print(f"  bound to {host} only, so other devices cannot reach it")
+    print(f"  API docs:      http://localhost:{port}/docs")
+    if not api_key:
+        print("  note: no API key set, so anything on this network can control the device")
+    print(flush=True)
+
+
 def main() -> None:
     import argparse
 
@@ -410,7 +445,12 @@ def main() -> None:
     ap.add_argument("--host", default=config.server.host)
     ap.add_argument("--port", type=int, default=config.server.port)
     ap.add_argument("--log-level", default="info")
+    ap.add_argument("--quiet", action="store_true", help="do not print the URLs at startup")
     args = ap.parse_args()
+
+    if not args.quiet:
+        print_urls(args.host, args.port, config.server.api_key)
+
     uvicorn.run(build_default_app(), host=args.host, port=args.port,
                 log_level=args.log_level)
 
