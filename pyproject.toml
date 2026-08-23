@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "lamplight"
-version = "1.1.0"
+version = "1.1.1"
 description = "Local control of Xiaomi-ecosystem lights without a vendor application"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -70,6 +70,27 @@ Changelog = "https://github.com/smartwhale8/lamplight/blob/main/CHANGELOG.md"
 
 [tool.hatch.build.targets.wheel]
 packages = ["lamplight"]
+
+# An explicit include list rather than exclusions, so the contents do not depend on what
+# happens to be on disk. The release workflow builds the Android APK before packing the
+# sdist, and hatchling does not honour nested .gitignore files, so android/app/build was
+# being swept in: v1.1.0 shipped a 16 MB source distribution.
+[tool.hatch.build.targets.sdist]
+include = [
+  "/lamplight",
+  "/tests",
+  "/tools",
+  "/docs",
+  "/packaging",
+  "/constraints.txt",
+  "/run.sh",
+  "/README.md",
+  "/LICENSE",
+  "/CHANGELOG.md",
+  "/CONTRIBUTING.md",
+  "/CODE_OF_CONDUCT.md",
+  "/SECURITY.md",
+]
 
 # ------------------------------------------------------------------------------ tests
 

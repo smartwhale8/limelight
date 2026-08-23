@@ -10,6 +10,15 @@ contract in [docs/API.md](docs/API.md) is what the major version protects.
 
 Nothing yet.
 
+## [1.1.1] - 2026-08-23
+
+### Fixed
+
+- The Python source distribution was 16 MB, because the release workflow builds the Android
+  APK before packing the sdist and hatchling does not honour nested `.gitignore` files, so
+  `android/app/build` was swept in. The sdist now uses an explicit include list, so its
+  contents no longer depend on what happens to be on disk. It is 97 KB.
+
 ## [1.1.0] - 2026-08-23
 
 ### Added
@@ -121,6 +130,7 @@ First release.
   software: the device discloses its own token to any unauthenticated request on the local
   network, and its setup access point is open and unencrypted.
 
-[Unreleased]: https://github.com/smartwhale8/lamplight/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/smartwhale8/lamplight/compare/v1.1.1...HEAD
+[1.1.1]: https://github.com/smartwhale8/lamplight/releases/tag/v1.1.1
 [1.1.0]: https://github.com/smartwhale8/lamplight/releases/tag/v1.1.0
 [1.0.0]: https://github.com/smartwhale8/lamplight/releases/tag/v1.0.0
