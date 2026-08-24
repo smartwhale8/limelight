@@ -4,6 +4,7 @@
 
 **Local control for Xiaomi-ecosystem smart lights over the miIO protocol.**
 
+[![PyPI](https://img.shields.io/pypi/v/limelight-miio.svg)](https://pypi.org/project/limelight-miio/)
 [![CI](https://github.com/smartwhale8/limelight/actions/workflows/ci.yml/badge.svg)](https://github.com/smartwhale8/limelight/actions/workflows/ci.yml)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](https://github.com/smartwhale8/limelight/blob/main/LICENSE)
@@ -16,6 +17,10 @@ limelight controls a smart light directly over your local network. It provides a
 interface, a versioned JSON API, and a command line tool. It contacts no external service:
 every command is a UDP datagram sent from your machine to the device.
 
+```bash
+pip install limelight-miio
+```
+
 ## Contents
 
 - [What it does](#what-it-does)
@@ -26,7 +31,7 @@ every command is a UDP datagram sent from your machine to the device.
 - [Running the service](#running-the-service)
 - [Command line](#command-line)
 - [Authentication](#authentication)
-- [Timed behaviour and its one limitation](#timed-behaviour-and-its-one-limitation)
+- [Timed behaviour](#timed-behaviour)
 - [Running it permanently](#running-it-permanently)
 - [Documentation](#documentation)
 
@@ -125,8 +130,8 @@ philips-light-sread1_miapXXXX
 
 Two consequences: your machine loses internet while joined to it, and **this device's setup
 network advertises no default gateway**, so code that derives the device address from the
-routing table finds nothing. It answers on `192.168.4.1`. That detail defeated the first
-adoption attempt and is why [docs/ADOPTION.md](https://github.com/smartwhale8/limelight/blob/main/docs/ADOPTION.md) exists.
+routing table finds nothing. It answers on `192.168.4.1`. See
+[docs/ADOPTION.md](https://github.com/smartwhale8/limelight/blob/main/docs/ADOPTION.md).
 
 ### Addressing: the device id matters more than the IP
 
@@ -137,7 +142,7 @@ failing it re-runs discovery, matches on the device id, and updates the address 
 ### Transport: why UDP means retries
 
 Commands are **UDP datagrams to port 54321**. UDP is connectionless, with no delivery
-acknowledgement, which has one consequence worth internalising:
+acknowledgement, which has one consequence:
 
 > A lost datagram is indistinguishable from a dead device.
 
@@ -180,8 +185,8 @@ order:
 
 A write names a method and its arguments, and answers `{"result": ["ok"]}`.
 
-Reading everything in one datagram is not a nicety. The device is a single-threaded
-microcontroller on a connectionless transport, and one request per property drops datagrams.
+Read every property in one datagram. The device is a single-threaded microcontroller on a
+connectionless transport, and one request per property drops datagrams.
 
 The full property list and command surface for this lamp is in
 [docs/PROTOCOL.md](https://github.com/smartwhale8/limelight/blob/main/docs/PROTOCOL.md), including one coupling a client must respect:
@@ -243,17 +248,13 @@ Further reading: [docs/PROTOCOL.md](https://github.com/smartwhale8/limelight/blo
 
 Python 3.11 or newer.
 
-From PyPI, once published:
-
 ```bash
 pip install limelight-miio
 ```
 
-The distribution is `limelight-miio` because PyPI does not accept the bare name. Everything
-else stays `limelight`: `import limelight`, and the `limelight` and `limelight-server`
-commands.
+The commands are `limelight` and `limelight-server`, and the import is `import limelight`.
 
-From a checkout, for development or to run the newest code:
+From a checkout, to develop or to run the newest code:
 
 ```bash
 git clone https://github.com/smartwhale8/limelight.git
@@ -346,7 +347,7 @@ A separate consideration applies to the device itself: this firmware discloses i
 any unauthenticated request on the local network, so the device's real perimeter is your
 Wi-Fi password. See [SECURITY.md](https://github.com/smartwhale8/limelight/blob/main/SECURITY.md).
 
-## Timed behaviour and its one limitation
+## Timed behaviour
 
 The device firmware implements exactly one timed feature: `delay_off`, a hard cut-off after
 N minutes. **Gradual wake-up and gradual fade-out do not exist in the hardware.** limelight
