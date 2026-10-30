@@ -5,8 +5,8 @@
         The app speaks miIO directly to the lamp over UDP on the local network.
 
         INTERNET is required for any socket, including a purely local one.
-        ACCESS_NETWORK_STATE lets us read the active network's IPv4 address, which is how
-        the subnet to sweep during discovery is derived.
+        ACCESS_NETWORK_STATE lets us find the Wi-Fi network and read its IPv4 address, which
+        is how the subnet to sweep during discovery is derived.
         CHANGE_WIFI_MULTICAST_STATE allows a multicast lock while scanning. Replies from
         the lamp are unicast, so this is belt and braces, but some devices drop broadcast
         traffic aggressively without it.

@@ -39,6 +39,8 @@ class MiioClient(
     address: String,
     val token: String,
     val deviceId: Long,
+    /** Applied to each new socket with the target address, to pin traffic to a network. */
+    private val prepareSocket: (DatagramSocket, String) -> Unit = { _, _ -> },
 ) {
     /** Updated in place when the device is found at a new address after a DHCP change. */
     @Volatile
@@ -66,6 +68,7 @@ class MiioClient(
     /** Refresh the uptime stamp. Cheap, unencrypted, and needs no credential. */
     suspend fun handshake(): MiioCodec.Handshake = withContext(Dispatchers.IO) {
         DatagramSocket().use { socket ->
+            prepareSocket(socket, address)
             socket.soTimeout = TIMEOUT_MS
             val target = InetAddress.getByName(address)
             var lastError: Exception? = null
@@ -125,6 +128,7 @@ class MiioClient(
             repeat(RETRIES) { attempt ->
                 try {
                     DatagramSocket().use { socket ->
+                        prepareSocket(socket, address)
                         socket.soTimeout = TIMEOUT_MS
                         val packet = MiioCodec.buildCommand(body, token, deviceId, currentStamp())
                         socket.send(

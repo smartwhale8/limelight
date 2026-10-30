@@ -10,6 +10,23 @@ contract in [docs/API.md](docs/API.md) is what the major version protects.
 
 Nothing yet.
 
+## [Android 1.1.0] - 2026-10-30
+
+The Android app only. The Python package is unchanged at 2.1.0.
+
+### Added
+
+- **The Android scan screen offers a choice of network.** It lists the phone's Wi-Fi, Ethernet
+  and VPN subnets with Wi-Fi selected, and **Other subnet** accepts any other /24.
+
+### Fixed
+
+- **The Android app scans Wi-Fi when a VPN is connected.** The app read the active network,
+  which is the VPN for an app that a VPN covers, so it swept the tunnel's subnet and found
+  nothing. It now finds networks by transport and binds each socket to the network that
+  contains its target. A VPN that forbids bypass refuses the bind, and those sockets stay on
+  the default route.
+
 ## [2.1.0] - 2026-08-24
 
 ### Changed

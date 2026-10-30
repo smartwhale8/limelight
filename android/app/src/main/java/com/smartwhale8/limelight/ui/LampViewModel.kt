@@ -12,6 +12,7 @@ import com.smartwhale8.limelight.miio.DeviceUnreachableException
 import com.smartwhale8.limelight.miio.DiscoveredDevice
 import com.smartwhale8.limelight.miio.MiioClient
 import com.smartwhale8.limelight.miio.MiioDiscovery
+import com.smartwhale8.limelight.miio.ScanTarget
 import com.smartwhale8.limelight.miio.isValidToken
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -40,7 +41,7 @@ data class UiState(
     val scanning: Boolean = false,
     val scanProgress: Float = 0f,
     val found: List<DiscoveredDevice> = emptyList(),
-    val subnet: String? = null,
+    val targets: List<ScanTarget> = emptyList(),
     val message: String? = null,
     /** Set when the user picked a device that withholds its token and must supply one. */
     val awaitingTokenFor: DiscoveredDevice? = null,
@@ -68,20 +69,30 @@ class LampViewModel(app: Application) : AndroidViewModel(app) {
     val state: StateFlow<UiState> = _state.asStateFlow()
 
     init {
-        _state.update { it.copy(subnet = discovery.subnetPrefix()) }
+        refreshNetworks()
         store.load()?.let { saved -> reconnect(saved) }
     }
 
     // ------------------------------------------------------------------ discovery
 
-    fun scan() {
+    /** Re-read the networks on offer, since a VPN or Wi-Fi can change while the app sleeps. */
+    fun refreshNetworks() {
+        _state.update { it.copy(targets = discovery.scanTargets()) }
+    }
+
+    /**
+     * Sweep for devices.
+     *
+     * @param chosen the subnet prefix to sweep, or null for the first network on offer
+     */
+    fun scan(chosen: String? = null) {
         if (_state.value.scanning) return
         viewModelScope.launch {
             _state.update {
                 it.copy(scanning = true, scanProgress = 0f, found = emptyList(), message = null)
             }
             try {
-                val subnet = discovery.subnetPrefix()
+                val subnet = chosen ?: discovery.subnetPrefix()
                 if (subnet == null) {
                     _state.update {
                         it.copy(
@@ -91,14 +102,13 @@ class LampViewModel(app: Application) : AndroidViewModel(app) {
                     }
                     return@launch
                 }
-                val devices = discovery.discover { progress ->
+                val devices = discovery.discover(subnet) { progress ->
                     _state.update { it.copy(scanProgress = progress) }
                 }
                 _state.update {
                     it.copy(
                         scanning = false,
                         found = devices,
-                        subnet = subnet,
                         message = if (devices.isEmpty())
                             "No devices answered on ${subnet}0/24. " +
                                 "Check the lamp is powered on and joined to this network."
@@ -146,7 +156,7 @@ class LampViewModel(app: Application) : AndroidViewModel(app) {
         viewModelScope.launch {
             _state.update { it.copy(busy = true, message = null) }
             try {
-                val client = MiioClient(device.address, token, device.deviceId)
+                val client = MiioClient(device.address, token, device.deviceId, discovery::bindFor)
                 val built = DriverRegistry.createByAsking(client)
                 if (built == null) {
                     _state.update {
@@ -180,7 +190,7 @@ class LampViewModel(app: Application) : AndroidViewModel(app) {
     private fun reconnect(saved: DeviceStore.Saved) {
         viewModelScope.launch {
             _state.update { it.copy(busy = true) }
-            val client = MiioClient(saved.address, saved.token, saved.deviceId)
+            val client = MiioClient(saved.address, saved.token, saved.deviceId, discovery::bindFor)
             val built = DriverRegistry.create(saved.model, client)
             if (built == null) {
                 _state.update { it.copy(busy = false) }
@@ -232,7 +242,7 @@ class LampViewModel(app: Application) : AndroidViewModel(app) {
         stopPolling()
         driver = null
         store.clear()
-        _state.value = UiState(subnet = discovery.subnetPrefix())
+        _state.value = UiState(targets = discovery.scanTargets())
     }
 
     // -------------------------------------------------------------------- polling

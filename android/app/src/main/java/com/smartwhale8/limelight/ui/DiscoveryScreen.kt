@@ -13,6 +13,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Lightbulb
@@ -26,6 +28,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -39,9 +42,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.smartwhale8.limelight.miio.DiscoveredDevice
+import com.smartwhale8.limelight.miio.Subnet
 
 /**
  * Finds lamps on the local network and lets the user connect to one.
@@ -53,6 +59,14 @@ import com.smartwhale8.limelight.miio.DiscoveredDevice
 @Composable
 fun DiscoveryScreen(state: UiState, vm: LampViewModel) {
     val snackbar = remember { SnackbarHostState() }
+
+    var pickedSubnet by remember { mutableStateOf<String?>(null) }
+    var useOther by remember { mutableStateOf(false) }
+    var otherInput by remember { mutableStateOf("") }
+
+    // The picked network can disappear when a VPN stops, and Wi-Fi is first otherwise.
+    val picked = state.targets.firstOrNull { it.subnet == pickedSubnet } ?: state.targets.firstOrNull()
+    val otherSubnet = Subnet.parse(otherInput)
 
     LaunchedEffect(state.message) {
         state.message?.let {
@@ -76,13 +90,49 @@ fun DiscoveryScreen(state: UiState, vm: LampViewModel) {
             Spacer(Modifier.height(24.dp))
             Text("Find a lamp", style = MaterialTheme.typography.titleLarge)
             Text(
-                text = state.subnet?.let { "Searching ${it}0/24 on your Wi-Fi" }
-                    ?: "Not connected to Wi-Fi",
+                text = if (state.targets.isEmpty()) "Not connected to Wi-Fi"
+                else "Choose the network to scan",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
 
-            Spacer(Modifier.height(20.dp))
+            Spacer(Modifier.height(12.dp))
+
+            Column(modifier = Modifier.selectableGroup()) {
+                state.targets.forEach { target ->
+                    NetworkOption(
+                        selected = !useOther && target == picked,
+                        title = target.kind.label,
+                        detail = target.cidr,
+                        onClick = {
+                            useOther = false
+                            pickedSubnet = target.subnet
+                        },
+                    )
+                }
+                NetworkOption(
+                    selected = useOther,
+                    title = "Other subnet",
+                    onClick = { useOther = true },
+                )
+            }
+
+            if (useOther) {
+                Spacer(Modifier.height(8.dp))
+                OutlinedTextField(
+                    value = otherInput,
+                    onValueChange = { otherInput = it },
+                    label = { Text("Subnet to scan") },
+                    singleLine = true,
+                    enabled = !state.scanning,
+                    isError = otherInput.isNotBlank() && otherSubnet == null,
+                    supportingText = { Text("Scans the /24, for example 192.168.1.0") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+
+            Spacer(Modifier.height(12.dp))
 
             if (state.scanning) {
                 LinearProgressIndicator(
@@ -97,7 +147,8 @@ fun DiscoveryScreen(state: UiState, vm: LampViewModel) {
                 )
             } else {
                 Button(
-                    onClick = { vm.scan() },
+                    onClick = { vm.scan(if (useOther) otherSubnet else picked?.subnet) },
+                    enabled = !useOther || otherSubnet != null,
                     modifier = Modifier.fillMaxWidth(),
                 ) {
                     Icon(
@@ -135,6 +186,33 @@ fun DiscoveryScreen(state: UiState, vm: LampViewModel) {
             onDismiss = { vm.cancelTokenEntry() },
             onConfirm = { token -> vm.connectWithToken(device, token) },
         )
+    }
+}
+
+@Composable
+private fun NetworkOption(
+    selected: Boolean,
+    title: String,
+    detail: String? = null,
+    onClick: () -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .selectable(selected = selected, role = Role.RadioButton, onClick = onClick)
+            .padding(vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        RadioButton(selected = selected, onClick = null)
+        Spacer(Modifier.width(12.dp))
+        Text(title, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
+        if (detail != null) {
+            Text(
+                detail,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
     }
 }
 
