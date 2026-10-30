@@ -8,8 +8,9 @@ no laptop, no cloud service, no account.
 
 ## What it does
 
-1. **Finds lamps.** Broadcasts the miIO handshake across your subnet and lists everything
-   that answers.
+1. **Finds lamps.** Broadcasts the miIO handshake across the network you choose and lists
+   everything that answers. The scan screen lists your Wi-Fi, Ethernet and VPN subnets with
+   Wi-Fi selected, and **Other subnet** accepts any other /24.
 2. **Connects.** A device that discloses its token connects in one tap. One that withholds
    it prompts for a token, and remembers it afterwards.
 3. **Controls.** Power, brightness, eyecare mode, ambient light and its brightness, four
@@ -127,7 +128,7 @@ an earlier version did, switches it straight back off.
 | Permission | Why |
 |---|---|
 | `INTERNET` | Required for any socket, including a purely local one |
-| `ACCESS_NETWORK_STATE` | Reads the active network's IPv4 address, to derive the subnet to sweep |
+| `ACCESS_NETWORK_STATE` | Finds the Wi-Fi network and reads its IPv4 address, to derive the subnet to sweep |
 | `CHANGE_WIFI_MULTICAST_STATE` | Holds a multicast lock during a scan |
 
 No cleartext HTTP configuration is needed, because the app speaks raw UDP rather than HTTP.

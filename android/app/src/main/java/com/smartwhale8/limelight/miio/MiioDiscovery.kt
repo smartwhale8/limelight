@@ -3,6 +3,8 @@ package com.smartwhale8.limelight.miio
 import android.content.Context
 import android.net.ConnectivityManager
 import android.net.LinkProperties
+import android.net.Network
+import android.net.NetworkCapabilities
 import android.net.wifi.WifiManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -43,17 +45,34 @@ class MiioDiscovery(private val context: Context) {
         private const val SEND_PAUSE_MS = 2L
     }
 
+    private val connectivity: ConnectivityManager?
+        get() = context.getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager
+
     /**
-     * The device's own IPv4 address on the active network, or null when not on IPv4.
+     * Every local network with an IPv4 address, by transport.
      *
-     * Read from [ConnectivityManager] rather than by enumerating interfaces, so it
-     * reflects the network actually in use rather than any interface that happens to be up.
+     * [ConnectivityManager.getActiveNetwork] returns the VPN for an app that a VPN covers,
+     * so reading it alone hides Wi-Fi, which is where lamps live.
      */
-    fun localIpv4(): String? {
-        val cm = context.getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager
-            ?: return null
-        val network = cm.activeNetwork ?: return null
-        val props: LinkProperties = cm.getLinkProperties(network) ?: return null
+    @Suppress("DEPRECATION") // The replacement is a callback, and this is a one-shot read.
+    private fun localNetworks(): Map<ScanTarget, Network> {
+        val cm = connectivity ?: return emptyMap()
+        return cm.allNetworks.mapNotNull { network ->
+            val caps = cm.getNetworkCapabilities(network) ?: return@mapNotNull null
+            val kind = when {
+                // A VPN also reports the transports beneath it, so this check comes first.
+                caps.hasTransport(NetworkCapabilities.TRANSPORT_VPN) -> NetworkKind.VPN
+                caps.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) -> NetworkKind.WIFI
+                caps.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET) -> NetworkKind.ETHERNET
+                else -> return@mapNotNull null
+            }
+            val subnet = ipv4Of(network)?.let(Subnet::prefixOf) ?: return@mapNotNull null
+            ScanTarget(kind, subnet) to network
+        }.toMap()
+    }
+
+    private fun ipv4Of(network: Network): String? {
+        val props: LinkProperties = connectivity?.getLinkProperties(network) ?: return null
         return props.linkAddresses
             .map { it.address }
             .filterIsInstance<Inet4Address>()
@@ -61,19 +80,44 @@ class MiioDiscovery(private val context: Context) {
             ?.hostAddress
     }
 
-    /** The /24 prefix to sweep, including the trailing dot, for example `192.168.0.` */
-    fun subnetPrefix(): String? =
-        localIpv4()?.substringBeforeLast('.')?.plus('.')
+    /** The networks the scan screen offers, Wi-Fi first. */
+    fun scanTargets(): List<ScanTarget> = Subnet.scanOrder(localNetworks().keys)
+
+    /** The default /24 prefix to sweep, including the trailing dot, for example `192.168.1.` */
+    fun subnetPrefix(): String? = scanTargets().firstOrNull()?.subnet
 
     /**
-     * Sweep the local /24 and return every device that answers.
+     * Send this socket's traffic over the network that contains [address].
      *
+     * An address on no local network goes over the first network that is not a VPN, so a
+     * typed subnet behind the home router leaves through Wi-Fi.
+     *
+     * A VPN that forbids bypass refuses the bind. The socket then stays on the default
+     * route, which still reaches the LAN when the VPN excludes local traffic.
+     */
+    fun bindFor(socket: DatagramSocket, address: String) {
+        val networks = localNetworks()
+        val targets = Subnet.scanOrder(networks.keys)
+        val prefix = Subnet.prefixOf(address)
+        val target = targets.firstOrNull { it.subnet == prefix }
+            ?: targets.firstOrNull { it.kind != NetworkKind.VPN }
+            ?: return
+        runCatching { networks.getValue(target).bindSocket(socket) }
+    }
+
+    /**
+     * Sweep a /24 and return every device that answers.
+     *
+     * @param subnet the prefix to sweep, or null for the first network in [scanTargets]
      * @param onProgress reports fractional progress while datagrams are being sent, so
      *   the interface can show a determinate indicator
      */
-    suspend fun discover(onProgress: (Float) -> Unit = {}): List<DiscoveredDevice> =
+    suspend fun discover(
+        subnet: String? = null,
+        onProgress: (Float) -> Unit = {},
+    ): List<DiscoveredDevice> =
         withContext(Dispatchers.IO) {
-            val prefix = subnetPrefix()
+            val prefix = subnet ?: subnetPrefix()
                 ?: return@withContext emptyList()
 
             // Replies arrive as unicast to our source port, so a multicast lock is not
@@ -89,6 +133,7 @@ class MiioDiscovery(private val context: Context) {
             val found = LinkedHashMap<String, DiscoveredDevice>()
             try {
                 DatagramSocket().use { socket ->
+                    bindFor(socket, "${prefix}1")
                     socket.broadcast = true
                     socket.soTimeout = 400
 

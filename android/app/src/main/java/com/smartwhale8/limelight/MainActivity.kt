@@ -53,6 +53,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onStart() {
         super.onStart()
+        viewModelRef?.refreshNetworks()
         viewModelRef?.startPolling()
     }
 }
